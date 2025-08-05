@@ -19,9 +19,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  define: {
-    'import.meta.env.VITE_GROQ_API_KEY': JSON.stringify(process.env.GROQ_API_KEY),
-    'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
-    'import.meta.env.VITE_HUGGINGFACE_API_KEY': JSON.stringify(process.env.HUGGINGFACE_API_KEY),
-  },
+  // Configurações de build removidas - APIs agora são chamadas via Supabase Edge Functions
 }));

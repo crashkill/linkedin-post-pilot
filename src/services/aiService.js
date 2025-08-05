@@ -1,113 +1,97 @@
 // Serviço de IA para geração de conteúdo e imagens
-// Integra com Groq, Hugging Face e Google AI Studio
+// Integra com Groq, Hugging Face e Google AI Studio via Supabase Edge Functions
+
+import { createClient } from '@supabase/supabase-js'
 
 class AIService {
   constructor() {
-    // Configuração das APIs - usando variáveis do Doppler via process.env
-    this.groqApiKey = import.meta.env.VITE_GROQ_API_KEY || process.env.GROQ_API_KEY;
-    this.geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    this.huggingfaceApiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY || process.env.HUGGINGFACE_API_KEY;
+    // Configuração do cliente Supabase
+    this.supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    )
+    
+    // URLs das Edge Functions
+    this.baseUrl = import.meta.env.VITE_SUPABASE_URL
+    this.groqUrl = `${this.baseUrl}/functions/v1/groq-proxy`
+    this.geminiUrl = `${this.baseUrl}/functions/v1/gemini-proxy`
+    this.huggingfaceUrl = `${this.baseUrl}/functions/v1/huggingface-proxy`
   }
 
-  // Gerar conteúdo de texto usando Groq (Llama)
+  // Método auxiliar para fazer requisições autenticadas
+  async makeAuthenticatedRequest(url, body) {
+    const { data: { session } } = await this.supabase.auth.getSession()
+    
+    if (!session) {
+      throw new Error('Usuário não autenticado')
+    }
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+    }
+
+    return response.json()
+  }
+
+  // Gerar conteúdo de texto usando Groq (Llama) via proxy
   async generateContent(prompt, options = {}) {
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.groqApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            {
-              role: 'system',
-              content: 'Você é um especialista em criação de conteúdo para LinkedIn. Crie posts profissionais, engajantes e relevantes sobre tecnologia, automação e IA.'
-            },
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: options.maxTokens || 500,
-          temperature: options.temperature || 0.7
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na API Groq: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0].message.content;
+      const data = await this.makeAuthenticatedRequest(this.groqUrl, {
+        prompt,
+        options
+      })
+      
+      return data.content
     } catch (error) {
-      console.error('Erro ao gerar conteúdo:', error);
-      throw error;
+      console.error('Erro ao gerar conteúdo:', error)
+      // Fallback para Gemini em caso de erro
+      try {
+        console.log('Tentando fallback para Gemini...')
+        return await this.generateContentWithGemini(prompt, options)
+      } catch (fallbackError) {
+        console.error('Erro no fallback para Gemini:', fallbackError)
+        throw error
+      }
     }
   }
 
-  // Gerar conteúdo usando Google Gemini (alternativa)
+  // Gerar conteúdo usando Google Gemini (alternativa) via proxy
   async generateContentWithGemini(prompt, options = {}) {
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.geminiApiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Você é um especialista em criação de conteúdo para LinkedIn. ${prompt}`
-            }]
-          }],
-          generationConfig: {
-            temperature: options.temperature || 0.7,
-            maxOutputTokens: options.maxTokens || 500
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na API Gemini: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.candidates[0].content.parts[0].text;
+      const data = await this.makeAuthenticatedRequest(this.geminiUrl, {
+        prompt,
+        options
+      })
+      
+      return data.content
     } catch (error) {
-      console.error('Erro ao gerar conteúdo com Gemini:', error);
-      throw error;
+      console.error('Erro ao gerar conteúdo com Gemini:', error)
+      throw error
     }
   }
 
-  // Gerar imagem usando Hugging Face (Stable Diffusion)
+  // Gerar imagem usando Hugging Face (Stable Diffusion) via proxy
   async generateImage(prompt, options = {}) {
     try {
-      const response = await fetch('https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.huggingfaceApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: `Professional LinkedIn post image: ${prompt}, high quality, modern, clean design, technology theme`,
-          parameters: {
-            negative_prompt: 'blurry, low quality, distorted, ugly',
-            num_inference_steps: options.steps || 20,
-            guidance_scale: options.guidance || 7.5
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro na API Hugging Face: ${response.status}`);
-      }
-
-      const blob = await response.blob();
-      return URL.createObjectURL(blob);
+      const data = await this.makeAuthenticatedRequest(this.huggingfaceUrl, {
+        prompt,
+        options
+      })
+      
+      return data.image
     } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      throw error;
+      console.error('Erro ao gerar imagem:', error)
+      throw error
     }
   }
 

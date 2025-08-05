@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,14 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Clock, Plus, Filter, Search, Edit, Trash2, Share, Eye, TrendingUp, MessageCircle, Heart, Sparkles, Wand2, Image } from "lucide-react";
+import { Calendar, Clock, Plus, Filter, Search, Edit, Trash2, Share, Eye, TrendingUp, MessageCircle, Heart, Sparkles, Wand2, Image, Loader2 } from "lucide-react";
 import aiService from "../services/aiService.js";
+import { postsService, type Post, type CreatePostData } from "../services/postsService";
 import { useToast } from "@/hooks/use-toast";
 
 const Posts = () => {
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newPost, setNewPost] = useState({
     title: "",
     content: "",
@@ -22,66 +26,88 @@ const Posts = () => {
     scheduledDate: "",
     aiTopic: ""
   });
-  const [generatedImage, setGeneratedImage] = useState(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const posts = [
-    {
-      id: 1,
-      title: "Tendências em Data Science 2024",
-      content: "A inteligência artificial está moldando o futuro da análise de dados. Confira as principais tendências que vão dominar 2024...",
-      status: "scheduled",
-      scheduledDate: "2024-01-15",
-      scheduledTime: "10:00",
-      category: "tecnologia",
-      engagement: { likes: 45, comments: 12, shares: 8, views: 1200 },
-      image: "/placeholder.svg"
-    },
-    {
-      id: 2,
-      title: "Machine Learning na Prática",
-      content: "Como aplicar machine learning em projetos reais. Um guia prático com exemplos de implementação...",
-      status: "published",
-      scheduledDate: "2024-01-14",
-      scheduledTime: "14:30",
-      category: "educacao",
-      engagement: { likes: 67, comments: 23, shares: 15, views: 2100 },
-      image: "/placeholder.svg"
-    },
-    {
-      id: 3,
-      title: "Automação com Python",
-      content: "Descubra como automatizar tarefas repetitivas usando Python. Scripts úteis para o dia a dia...",
-      status: "draft",
-      scheduledDate: "2024-01-16",
-      scheduledTime: "18:00",
-      category: "programacao",
-      engagement: { likes: 0, comments: 0, shares: 0, views: 0 },
-      image: "/placeholder.svg"
-    },
-    {
-      id: 4,
-      title: "Cloud Computing para Iniciantes",
-      content: "Entenda os conceitos básicos de computação em nuvem e como começar sua jornada...",
-      status: "published",
-      scheduledDate: "2024-01-13",
-      scheduledTime: "09:15",
-      category: "tecnologia",
-      engagement: { likes: 89, comments: 34, shares: 21, views: 3200 },
-      image: "/placeholder.svg"
-    },
-    {
-      id: 5,
-      title: "Carreira em Tech: Dicas Essenciais",
-      content: "Conselhos práticos para quem quer ingressar ou crescer na área de tecnologia...",
-      status: "scheduled",
-      scheduledDate: "2024-01-17",
-      scheduledTime: "16:30",
-      category: "carreira",
-      engagement: { likes: 0, comments: 0, shares: 0, views: 0 },
-      image: "/placeholder.svg"
+  // Carregar posts do usuário
+  const loadPosts = async () => {
+    try {
+      setIsLoading(true);
+      const userPosts = await postsService.getUserPosts();
+      setPosts(userPosts);
+    } catch (error) {
+      console.error('Erro ao carregar posts:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar posts. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  // Carregar posts ao montar o componente
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  // Salvar post no Supabase
+  const savePost = async (postData: CreatePostData, isDraft: boolean = false) => {
+    try {
+      const status = isDraft ? 'draft' : (postData.scheduledFor ? 'scheduled' : 'published');
+      
+      const newPostData: CreatePostData = {
+        ...postData,
+        status,
+        imageUrl: generatedImage || undefined
+      };
+
+      const savedPost = await postsService.createPost(newPostData);
+      
+      // Atualizar lista de posts
+      setPosts(prev => [savedPost, ...prev]);
+      
+      // Resetar formulário
+      resetForm();
+      setIsDialogOpen(false);
+      
+      toast({
+        title: "Sucesso",
+        description: `Post ${isDraft ? 'salvo como rascunho' : 'criado'} com sucesso!`,
+      });
+      
+      return savedPost;
+    } catch (error) {
+      console.error('Erro ao salvar post:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar post. Tente novamente.",
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
+  // Deletar post
+  const deletePost = async (postId: string) => {
+    try {
+      await postsService.deletePost(postId);
+      setPosts(prev => prev.filter(post => post.id !== postId));
+      
+      toast({
+        title: "Sucesso",
+        description: "Post deletado com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao deletar post:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar post. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -106,6 +132,15 @@ const Posts = () => {
     return colors[category as keyof typeof colors] || "bg-muted text-muted-foreground";
   };
 
+  // Calcular contagens por status
+  const statusCounts = {
+    all: posts.length,
+    published: posts.filter(post => post.status === "published").length,
+    scheduled: posts.filter(post => post.status === "scheduled").length,
+    draft: posts.filter(post => post.status === "draft").length
+  };
+
+  // Filtrar posts
   const filteredPosts = posts.filter(post => {
     const matchesTab = selectedTab === "all" || post.status === selectedTab;
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -189,7 +224,7 @@ const Posts = () => {
     if (!newPost.content.trim()) {
       toast({
         title: "Erro",
-        description: "Adicione conteúdo para melhorar.",
+        description: "Por favor, adicione conteúdo antes de melhorar.",
         variant: "destructive"
       });
       return;
@@ -198,11 +233,15 @@ const Posts = () => {
     setIsGenerating(true);
     try {
       const improvedContent = await aiService.improveContent(newPost.content);
-      setNewPost(prev => ({ ...prev, content: improvedContent }));
+      
+      setNewPost(prev => ({
+        ...prev,
+        content: improvedContent
+      }));
       
       toast({
-        title: "Sucesso!",
-        description: "Conteúdo melhorado com IA!"
+        title: "Sucesso",
+        description: "Conteúdo melhorado com sucesso!"
       });
     } catch (error) {
       console.error('Erro ao melhorar conteúdo:', error);
@@ -227,12 +266,7 @@ const Posts = () => {
     setGeneratedImage(null);
   };
 
-  const tabCounts = {
-    all: posts.length,
-    published: posts.filter(p => p.status === "published").length,
-    scheduled: posts.filter(p => p.status === "scheduled").length,
-    draft: posts.filter(p => p.status === "draft").length
-  };
+
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -247,7 +281,7 @@ const Posts = () => {
               Crie, edite e agende seus posts no LinkedIn
             </p>
           </div>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="hero" size="lg" onClick={resetForm}>
                 <Plus className="w-4 h-4" />
@@ -446,8 +480,36 @@ const Posts = () => {
               
               <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button variant="outline" onClick={resetForm}>Limpar</Button>
-                <Button variant="outline">Salvar como Rascunho</Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">Publicar Agora</Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const postData = {
+                      title: newPost.title,
+                      content: newPost.content,
+                      category: newPost.category,
+                      scheduledFor: newPost.scheduledDate ? new Date(newPost.scheduledDate) : undefined
+                    };
+                    savePost(postData, true);
+                  }}
+                  disabled={!newPost.title.trim() || !newPost.content.trim()}
+                >
+                  Salvar como Rascunho
+                </Button>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    const postData = {
+                      title: newPost.title,
+                      content: newPost.content,
+                      category: newPost.category,
+                      scheduledFor: newPost.scheduledDate ? new Date(newPost.scheduledDate) : undefined
+                    };
+                    savePost(postData, false);
+                  }}
+                  disabled={!newPost.title.trim() || !newPost.content.trim()}
+                >
+                  {newPost.scheduledDate ? 'Agendar Post' : 'Publicar Agora'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -481,118 +543,149 @@ const Posts = () => {
         {/* Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">Todos ({tabCounts.all})</TabsTrigger>
-            <TabsTrigger value="published">Publicados ({tabCounts.published})</TabsTrigger>
-            <TabsTrigger value="scheduled">Agendados ({tabCounts.scheduled})</TabsTrigger>
-            <TabsTrigger value="draft">Rascunhos ({tabCounts.draft})</TabsTrigger>
+            <TabsTrigger value="all">Todos ({statusCounts.all})</TabsTrigger>
+            <TabsTrigger value="published">Publicados ({statusCounts.published})</TabsTrigger>
+            <TabsTrigger value="scheduled">Agendados ({statusCounts.scheduled})</TabsTrigger>
+            <TabsTrigger value="draft">Rascunhos ({statusCounts.draft})</TabsTrigger>
           </TabsList>
 
           <TabsContent value={selectedTab} className="mt-6">
-            <div className="grid gap-6">
-              {filteredPosts.map((post) => (
-                <Card key={post.id} className="hover:shadow-lg transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex gap-6">
-                      <div className="w-32 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
-                        <Eye className="w-8 h-8 text-muted-foreground" />
-                      </div>
-                      
-                      <div className="flex-1 space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-3">
-                              <h3 className="text-xl font-semibold hover:text-primary cursor-pointer">
-                                {post.title}
-                              </h3>
-                              {getStatusBadge(post.status)}
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(post.category)}`}>
-                                {post.category}
-                              </span>
-                            </div>
-                            <p className="text-muted-foreground line-clamp-2">
-                              {post.content}
-                            </p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Carregando posts...</span>
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {filteredPosts.map((post) => (
+                  <Card key={post.id} className="hover:shadow-lg transition-all duration-300">
+                    <CardContent className="p-6">
+                      <div className="flex gap-6">
+                        {post.imageUrl ? (
+                          <div className="w-32 h-24 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
+                            <img 
+                              src={post.imageUrl} 
+                              alt="Post image" 
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Share className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                        ) : (
+                          <div className="w-32 h-24 bg-muted rounded-lg flex-shrink-0 flex items-center justify-center">
+                            <Eye className="w-8 h-8 text-muted-foreground" />
                           </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {new Date(post.scheduledDate).toLocaleDateString('pt-BR')}
+                        )}
+                        
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-3">
+                                <h3 className="text-xl font-semibold hover:text-primary cursor-pointer">
+                                  {post.title}
+                                </h3>
+                                {getStatusBadge(post.status)}
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(post.category)}`}>
+                                  {post.category}
+                                </span>
+                              </div>
+                              <p className="text-muted-foreground line-clamp-2">
+                                {post.content}
+                              </p>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {post.scheduledTime}
-                            </div>
-                          </div>
-
-                          {post.status === "published" && (
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center gap-1 text-muted-foreground">
-                                <Eye className="w-4 h-4" />
-                                {post.engagement.views}
-                              </div>
-                              <div className="flex items-center gap-1 text-red-600">
-                                <Heart className="w-4 h-4" />
-                                {post.engagement.likes}
-                              </div>
-                              <div className="flex items-center gap-1 text-blue-600">
-                                <MessageCircle className="w-4 h-4" />
-                                {post.engagement.comments}
-                              </div>
-                              <div className="flex items-center gap-1 text-green-600">
+                            
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button variant="outline" size="sm">
                                 <Share className="w-4 h-4" />
-                                {post.engagement.shares}
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => deletePost(post.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {post.scheduledFor 
+                                  ? new Date(post.scheduledFor).toLocaleDateString('pt-BR')
+                                  : post.publishedAt 
+                                  ? new Date(post.publishedAt).toLocaleDateString('pt-BR')
+                                  : new Date(post.createdAt).toLocaleDateString('pt-BR')
+                                }
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {post.scheduledFor 
+                                  ? new Date(post.scheduledFor).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                  : post.publishedAt 
+                                  ? new Date(post.publishedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                  : new Date(post.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                }
                               </div>
                             </div>
-                          )}
+
+                            {post.status === "published" && (
+                              <div className="flex items-center gap-4 text-sm">
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <Eye className="w-4 h-4" />
+                                  {post.views || 0}
+                                </div>
+                                <div className="flex items-center gap-1 text-red-600">
+                                  <Heart className="w-4 h-4" />
+                                  {post.likes || 0}
+                                </div>
+                                <div className="flex items-center gap-1 text-blue-600">
+                                  <MessageCircle className="w-4 h-4" />
+                                  {post.comments || 0}
+                                </div>
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <Share className="w-4 h-4" />
+                                  {post.shares || 0}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
 
-            {filteredPosts.length === 0 && (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <div className="space-y-4">
-                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                      <Calendar className="w-8 h-8 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">Nenhum post encontrado</h3>
-                      <p className="text-muted-foreground">
-                        {searchTerm ? "Tente ajustar sua busca" : "Comece criando seu primeiro post"}
-                      </p>
-                    </div>
-                    {!searchTerm && (
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="hero">
+                {filteredPosts.length === 0 && (
+                  <Card>
+                    <CardContent className="p-12 text-center">
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                          <Calendar className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold">Nenhum post encontrado</h3>
+                          <p className="text-muted-foreground">
+                            {searchTerm ? "Tente ajustar sua busca" : "Comece criando seu primeiro post"}
+                          </p>
+                        </div>
+                        {!searchTerm && (
+                          <Button 
+                            onClick={() => setIsDialogOpen(true)}
+                            variant="hero"
+                          >
                             <Plus className="w-4 h-4" />
                             Criar Primeiro Post
                           </Button>
-                        </DialogTrigger>
-                      </Dialog>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </TabsContent>
         </Tabs>
