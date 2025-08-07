@@ -50,7 +50,8 @@ class LinkedInService {
         redirectUri
       })
       
-      return data
+      // A Edge Function retorna um objeto com authUrl
+      return data.authUrl
     } catch (error) {
       console.error('Erro ao iniciar autenticação LinkedIn:', error)
       throw error
@@ -219,8 +220,8 @@ class LinkedInService {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'scheduled')
-        .not('linkedin_scheduled_for', 'is', null)
-        .order('linkedin_scheduled_for', { ascending: true })
+        .not('scheduled_for', 'is', null)
+        .order('scheduled_for', { ascending: true })
 
       if (error) throw error
 

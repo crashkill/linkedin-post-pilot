@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Environment variables - USE DOPPLER INSTEAD!
+# Never commit .env files - all secrets are managed by Doppler
+.env
+.env.*
+!.env.example
+
+# Doppler
+.doppler.yaml.bak
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

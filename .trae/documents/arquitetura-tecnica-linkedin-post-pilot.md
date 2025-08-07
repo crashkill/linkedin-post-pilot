@@ -350,32 +350,40 @@ INSERT INTO posts (user_id, title, content, category, status) VALUES
 
 ## 7. Configuração de Ambiente
 
-### 7.1 Variáveis de Ambiente
+### 7.1 Gerenciamento de Segredos com Doppler
 
-```env
-# Frontend (.env)
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_LINKEDIN_CLIENT_ID=your-linkedin-client-id
+**⚠️ IMPORTANTE: Este projeto usa Doppler para gerenciar segredos de forma segura. Nunca use arquivos .env!**
 
-# Backend (.env.local)
+```bash
+# Configuração inicial do Doppler
+doppler login
+doppler setup
+# Selecione: linkedin-post-pilot
+# Ambiente: dev
+
+# Configurar variáveis no Doppler
+# Frontend
+doppler secrets set VITE_SUPABASE_URL="https://your-project.supabase.co"
+doppler secrets set VITE_SUPABASE_ANON_KEY="your-anon-key"
+
+# Backend (Edge Functions)
+doppler secrets set SUPABASE_URL="https://your-project.supabase.co"
+doppler secrets set SUPABASE_ANON_KEY="your-anon-key"
+doppler secrets set SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+
 # APIs de IA
-GROQ_API_KEY=gsk_your_groq_key
-GEMINI_API_KEY=your_gemini_key
-HUGGINGFACE_API_KEY=hf_your_token
+doppler secrets set GROQ_API_KEY="gsk_your_groq_key"
+doppler secrets set GEMINI_API_KEY="your_gemini_key"
+doppler secrets set HUGGINGFACE_API_KEY="hf_your_token"
 
 # LinkedIn OAuth
-LINKEDIN_CLIENT_ID=your_linkedin_client_id
-LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
-LINKEDIN_REDIRECT_URI=http://localhost:3000/auth/linkedin/callback
-
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
+doppler secrets set LINKEDIN_CLIENT_ID="your_linkedin_client_id"
+doppler secrets set LINKEDIN_CLIENT_SECRET="your_linkedin_client_secret"
+doppler secrets set LINKEDIN_REDIRECT_URI="http://localhost:8080/auth/linkedin/callback"
 
 # Outros
-JWT_SECRET=your-jwt-secret
-NODE_ENV=development
+doppler secrets set JWT_SECRET="your-jwt-secret"
+doppler secrets set NODE_ENV="development"
 ```
 
 ### 7.2 Scripts de Deploy
@@ -384,11 +392,16 @@ NODE_ENV=development
 {
   "scripts": {
     "dev": "vite",
+    "dev:doppler": "doppler run -- vite",
     "build": "vite build",
+    "build:doppler": "doppler run -- vite build",
     "preview": "vite preview",
-    "deploy:frontend": "npm run build && vercel --prod",
-    "deploy:db": "supabase db push",
-    "setup:env": "cp .env.example .env"
+    "preview:doppler": "doppler run -- vite preview",
+    "deploy:frontend": "doppler run -- npm run build && vercel --prod",
+    "deploy:db": "doppler run -- supabase db push",
+    "supabase:start": "doppler run -- supabase start",
+    "supabase:stop": "doppler run -- supabase stop",
+    "supabase:reset": "doppler run -- supabase db reset"
   }
 }
 ```
@@ -396,12 +409,14 @@ NODE_ENV=development
 ## 8. Segurança e Performance
 
 ### 8.1 Medidas de Segurança
+- **Doppler** para gerenciamento seguro de segredos
 - **Row Level Security (RLS)** no Supabase
-- **Chaves API no backend** apenas
+- **Chaves API no backend** apenas (Edge Functions)
 - **Rate limiting** nas APIs
 - **Validação de entrada** com Zod
 - **CORS** configurado adequadamente
 - **HTTPS** obrigatório em produção
+- **Nunca usar arquivos .env** em produção
 
 ### 8.2 Otimizações de Performance
 - **React Query** para cache de dados

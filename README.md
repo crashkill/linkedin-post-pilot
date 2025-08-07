@@ -1,4 +1,6 @@
-# Welcome to your Lovable project
+# LinkedIn Post Pilot 🚀
+
+Uma aplicação completa para automação e gerenciamento de posts no LinkedIn com IA integrada.
 
 ## Project info
 
@@ -32,9 +34,23 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Step 4: Configure Doppler for secrets management
+doppler login
+doppler setup
+# Select: linkedin-post-pilot
+# Environment: dev
+
+# Step 5: Start the development server with Doppler
+npm run dev:doppler
 ```
+
+## 🔐 Secrets Management
+
+This project uses **Doppler** for secure secrets management. Never use `.env` files!
+
+- See `DOPPLER_SETUP.md` for detailed configuration instructions
+- All API keys and sensitive data are managed through Doppler
+- Use `npm run dev:doppler` to run with proper environment variables
 
 **Edit a file directly in GitHub**
 
@@ -54,11 +70,34 @@ npm run dev
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Frontend
+- **Vite** - Build tool and dev server
+- **TypeScript** - Type safety
+- **React** - UI framework
+- **shadcn-ui** - Component library
+- **Tailwind CSS** - Styling
+- **React Router** - Navigation
+- **React Query** - Data fetching
+- **React Hook Form** - Form management
+- **Zod** - Schema validation
+
+### Backend
+- **Supabase** - Database, Auth, Storage
+- **Supabase Edge Functions** - Serverless functions
+- **PostgreSQL** - Database
+- **Row Level Security (RLS)** - Data security
+
+### AI & APIs
+- **Groq** - Fast AI text generation
+- **Google Gemini** - Advanced AI capabilities
+- **Hugging Face** - Image generation
+- **LinkedIn API** - Social media integration
+
+### DevOps & Security
+- **Doppler** - Secrets management
+- **Vercel** - Deployment platform
+- **GitHub Actions** - CI/CD
+- **ESLint** - Code linting
 
 ## How can I deploy this project?
 

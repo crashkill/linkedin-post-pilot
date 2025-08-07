@@ -1,0 +1,78 @@
+# Configuração do Doppler para LinkedIn Post Pilot
+# Este arquivo define as configurações do projeto no Doppler
+
+setup:
+  project: linkedin-post-pilot
+  config: dev
+
+# Configurações por ambiente
+configs:
+  dev:
+    description: "Ambiente de desenvolvimento"
+    secrets:
+      # Supabase
+      - VITE_SUPABASE_URL
+      - VITE_SUPABASE_ANON_KEY
+      - SUPABASE_URL
+      - SUPABASE_ANON_KEY
+      - SUPABASE_SERVICE_ROLE_KEY
+      
+      # LinkedIn OAuth
+      - LINKEDIN_CLIENT_ID
+      - LINKEDIN_CLIENT_SECRET
+      - LINKEDIN_REDIRECT_URI
+      
+      # APIs de IA
+      - GROQ_API_KEY
+      - GEMINI_API_KEY
+      - HUGGINGFACE_API_KEY
+      
+      # Outros
+      - JWT_SECRET
+      - NODE_ENV
+      
+  staging:
+    description: "Ambiente de staging"
+    secrets:
+      # Mesmas variáveis do dev
+      - VITE_SUPABASE_URL
+      - VITE_SUPABASE_ANON_KEY
+      - SUPABASE_URL
+      - SUPABASE_ANON_KEY
+      - SUPABASE_SERVICE_ROLE_KEY
+      - LINKEDIN_CLIENT_ID
+      - LINKEDIN_CLIENT_SECRET
+      - LINKEDIN_REDIRECT_URI
+      - GROQ_API_KEY
+      - GEMINI_API_KEY
+      - HUGGINGFACE_API_KEY
+      - JWT_SECRET
+      - NODE_ENV
+      
+  production:
+    description: "Ambiente de produção"
+    secrets:
+      # Mesmas variáveis do dev
+      - VITE_SUPABASE_URL
+      - VITE_SUPABASE_ANON_KEY
+      - SUPABASE_URL
+      - SUPABASE_ANON_KEY
+      - SUPABASE_SERVICE_ROLE_KEY
+      - LINKEDIN_CLIENT_ID
+      - LINKEDIN_CLIENT_SECRET
+      - LINKEDIN_REDIRECT_URI
+      - GROQ_API_KEY
+      - GEMINI_API_KEY
+      - HUGGINGFACE_API_KEY
+      - JWT_SECRET
+      - NODE_ENV
+
+# Comandos personalizados
+commands:
+  dev: "doppler run -- npm run dev"
+  build: "doppler run -- npm run build"
+  preview: "doppler run -- npm run preview"
+  test: "doppler run -- npm test"
+  supabase:start: "doppler run -- supabase start"
+  supabase:stop: "doppler run -- supabase stop"
+  supabase:reset: "doppler run -- supabase db reset"

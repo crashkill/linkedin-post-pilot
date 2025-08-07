@@ -30,18 +30,34 @@ Após a criação do projeto:
    - **anon public** key
    - **service_role** key (mantenha em segredo)
 
-### 3. Configurar Variáveis de Ambiente
+### 3. Configurar Variáveis de Ambiente com Doppler
 
-1. Copie o arquivo `.env.example` para `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+1. Configure o Doppler (veja `DOPPLER_SETUP.md` para instruções detalhadas):
 
-2. Edite o arquivo `.env` e substitua:
-   ```env
-   VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-   VITE_SUPABASE_ANON_KEY=sua_anon_key_aqui
-   ```
+```bash
+# Fazer login no Doppler
+doppler login
+
+# Configurar o projeto
+doppler setup
+# Selecione: linkedin-post-pilot
+# Ambiente: dev
+```
+
+2. Configure as variáveis do Supabase no Doppler:
+
+```bash
+# Supabase Frontend
+doppler secrets set VITE_SUPABASE_URL="https://seu-projeto.supabase.co"
+doppler secrets set VITE_SUPABASE_ANON_KEY="sua-chave-anonima"
+
+# Supabase Backend (Edge Functions)
+doppler secrets set SUPABASE_URL="https://seu-projeto.supabase.co"
+doppler secrets set SUPABASE_ANON_KEY="sua-chave-anonima"
+doppler secrets set SUPABASE_SERVICE_ROLE_KEY="sua-chave-service-role"
+```
+
+3. **Importante**: Nunca use arquivos `.env` - todos os segredos são gerenciados pelo Doppler!
 
 ### 4. Executar Migrações do Banco
 
@@ -52,7 +68,7 @@ Após a criação do projeto:
 3. Cole no editor SQL e execute
 4. Verifique se todas as tabelas foram criadas em **Table Editor**
 
-#### Opção B: Via CLI (Avançado)
+#### 4. Executar Migrações do Banco
 
 ```bash
 # Instalar Supabase CLI
@@ -64,8 +80,10 @@ supabase login
 # Linkar projeto local com o remoto
 supabase link --project-ref seu-project-id
 
-# Executar migrações
-supabase db push
+# Executar migrações com Doppler
+npm run supabase:push
+# ou
+doppler run -- supabase db push
 ```
 
 ### 5. Configurar Autenticação

@@ -7,7 +7,7 @@ interface ScheduledPost {
   id: string
   content: string
   image_url?: string
-  linkedin_scheduled_for: string
+  scheduled_for: string
   status: string
   created_at: string
 }
@@ -123,8 +123,8 @@ const LinkedInScheduler: React.FC<LinkedInSchedulerProps> = ({ onRefresh }) => {
       ) : (
         <div className="space-y-4">
           {scheduledPosts.map((post) => {
-            const { date, time } = formatDateTime(post.linkedin_scheduled_for)
-            const overdue = isOverdue(post.linkedin_scheduled_for)
+            const { date, time } = formatDateTime(post.scheduled_for)
+            const overdue = isOverdue(post.scheduled_for)
             
             return (
               <div

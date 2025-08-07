@@ -19,7 +19,6 @@ interface PendingPost {
   content: string
   image_url?: string
   scheduled_for: string
-  linkedin_scheduled_for: string
 }
 
 serve(async (req) => {
@@ -46,13 +45,12 @@ serve(async (req) => {
           user_id,
           content,
           image_url,
-          scheduled_for,
-          linkedin_scheduled_for
+          scheduled_for
         `)
         .eq('status', 'scheduled')
         .eq('published_to_linkedin', false)
-        .not('linkedin_scheduled_for', 'is', null)
-        .lte('linkedin_scheduled_for', now)
+        .not('scheduled_for', 'is', null)
+        .lte('scheduled_for', now)
         .limit(10)
 
       if (fetchError) {
@@ -251,7 +249,7 @@ serve(async (req) => {
           .from('posts')
           .update({
             status: 'scheduled',
-            linkedin_scheduled_for: scheduledFor
+            scheduled_for: scheduledFor
           })
           .eq('id', postId)
           .eq('user_id', user.id)
@@ -286,7 +284,7 @@ serve(async (req) => {
           .from('posts')
           .update({
             status: 'draft',
-            linkedin_scheduled_for: null
+            scheduled_for: null
           })
           .eq('id', postId)
           .eq('user_id', user.id)

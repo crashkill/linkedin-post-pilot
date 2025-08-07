@@ -51,24 +51,23 @@ O Tech Post Pilot agora conta com poderosas funcionalidades de IA para geração
 ### 1. Configuração das Chaves de API
 
 ```bash
-# Usando Doppler (recomendado)
-doppler secrets set VITE_GROQ_API_KEY="sua_chave_groq"
-doppler secrets set VITE_GEMINI_API_KEY="sua_chave_gemini"
-doppler secrets set VITE_HUGGINGFACE_API_KEY="sua_chave_hf"
+# Configure as chaves de API no Doppler
+doppler secrets set GROQ_API_KEY="sua_chave_groq"
+doppler secrets set GEMINI_API_KEY="sua_chave_gemini"
+doppler secrets set HUGGINGFACE_API_KEY="sua_chave_hf"
 
-# Ou usando .env
-cp .env.example .env
-# Edite o .env com suas chaves
+# Verificar se as chaves foram configuradas
+doppler secrets
 ```
 
 ### 2. Iniciando a Aplicação
 
 ```bash
-# Com Doppler (recomendado)
-doppler run -- npm run dev
+# Executar com Doppler
+npm run dev:doppler
 
-# Ou sem Doppler
-npm run dev
+# Ou diretamente
+doppler run -- npm run dev
 ```
 
 ### 3. Criando Posts com IA
@@ -90,6 +89,18 @@ npm run dev
 - ✅ Nunca exponha chaves no código
 - ✅ Rate limiting implementado
 - ✅ Tratamento de erros robusto
+
+## ✅ Checklist de Configuração
+
+- [ ] Doppler configurado e logado
+- [ ] Chaves de API configuradas no Doppler
+- [ ] Supabase conectado
+- [ ] Edge Functions deployadas
+- [ ] Rate limiting configurado
+- [ ] Testes de geração funcionando
+- [ ] Projeto executando com `npm run dev:doppler`
+- ✅ Todas as chaves são gerenciadas pelo Doppler
+- ✅ Nenhum arquivo .env no projeto
 
 ## 🎨 Interface
 

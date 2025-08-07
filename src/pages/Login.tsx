@@ -19,7 +19,7 @@ export function Login() {
   const location = useLocation()
   const { toast } = useToast()
   
-  const from = (location.state as any)?.from || '/dashboard'
+  const from = (location.state as { from?: string })?.from || '/dashboard'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -134,7 +134,7 @@ serve(async (req) => {
     console.log(`Groq API call for user ${user.id}: ${prompt.substring(0, 50)}...`)
 
     return new Response(
-      JSON.stringify({ content: data.choices[0].message.content }),
+      JSON.stringify({ content: groqData.choices[0].message.content }),
       { 
         status: 200, 
         headers: { 

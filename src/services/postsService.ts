@@ -56,13 +56,7 @@ class PostsService {
       .insert({
         ...postData,
         user_id: user.id,
-        status: postData.status || 'draft',
-        engagement_metrics: {
-          likes: 0,
-          comments: 0,
-          shares: 0,
-          views: 0
-        }
+        status: postData.status || 'draft'
       })
       .select()
       .single()

@@ -5,10 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:doppler": "doppler run -- vite",
     "build": "vite build",
+    "build:doppler": "doppler run -- vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:doppler": "doppler run -- vite preview",
+    "supabase:start": "doppler run -- supabase start",
+    "supabase:stop": "doppler run -- supabase stop",
+    "supabase:reset": "doppler run -- supabase db reset",
+    "supabase:push": "doppler run -- supabase db push",
+    "supabase:pull": "doppler run -- supabase db pull"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
