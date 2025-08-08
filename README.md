@@ -40,13 +40,43 @@ doppler setup
 # Select: linkedin-post-pilot
 # Environment: dev
 
-# Step 5: Start the development server with Doppler
-npm run dev:doppler
+# Step 5: Configure secrets in Doppler
+npm run setup:doppler
+
+# Step 6: Start the development server with Doppler
+npm run dev
 ```
 
 ## 🔐 Secrets Management
 
-This project uses **Doppler** for secure secrets management. Never use `.env` files!
+This project uses **Doppler** for secure secrets management. All sensitive variables have been migrated from `.env` to Doppler.
+
+### Quick Setup
+```bash
+# Install Doppler CLI
+choco install doppler  # Windows
+# or
+brew install doppler   # macOS
+
+# Configure project
+doppler login
+doppler setup
+
+# Setup all secrets automatically
+npm run setup:doppler
+
+# Verify migration
+node verify-doppler-migration.cjs
+```
+
+### Available Scripts
+- `npm run dev` - Development with Doppler (recommended)
+- `npm run dev:local` - Development without Doppler (only public vars)
+- `npm run setup:doppler` - Configure all secrets in Doppler
+- `npm run test:doppler` - Test Doppler configuration
+
+### Migration Guide
+See [DOPPLER_MIGRATION_GUIDE.md](./DOPPLER_MIGRATION_GUIDE.md) for complete migration instructions.
 
 - See `DOPPLER_SETUP.md` for detailed configuration instructions
 - All API keys and sensitive data are managed through Doppler
