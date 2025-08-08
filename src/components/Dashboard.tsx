@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Settings, TrendingUp, Users, Zap, Image, Play, Pause, Loader2 } from "lucide-react";
+import { Calendar, Clock, Settings, TrendingUp, Users, Zap, Image, Play, Pause, Loader2, TestTube } from "lucide-react";
 import { postsService, type Post } from "../services/postsService";
 import { useToast } from "@/hooks/use-toast";
 import LinkedInStatus from "./LinkedInStatus";
@@ -119,6 +119,10 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex gap-3">
+            <Button variant="outline" size="lg" onClick={() => window.location.href = '/test-linkedin'}>
+              <TestTube className="w-4 h-4" />
+              Teste LinkedIn
+            </Button>
             <Button variant="outline" size="lg">
               <Settings className="w-4 h-4" />
               Configurações

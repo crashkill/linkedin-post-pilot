@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Posts from "./pages/Posts";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
+import LinkedInTestPublisher from "./components/LinkedInTestPublisher";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Posts />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/test-linkedin" 
+            element={
+              <ProtectedRoute>
+                <LinkedInTestPublisher />
               </ProtectedRoute>
             } 
           />

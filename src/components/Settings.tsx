@@ -29,8 +29,6 @@ const Settings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     // LinkedIn Configuration
-    linkedinClientId: "",
-    linkedinClientSecret: "",
     linkedinRedirectUri: "",
     
     // Post Scheduling
@@ -126,26 +124,15 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="clientId">Client ID</Label>
-                  <Input
-                    id="clientId"
-                    placeholder="Seu LinkedIn Client ID"
-                    value={settings.linkedinClientId}
-                    onChange={(e) => setSettings({...settings, linkedinClientId: e.target.value})}
-                  />
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Key className="w-4 h-4 text-blue-600" />
+                  <h4 className="font-medium text-blue-900">Credenciais Configuradas</h4>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="clientSecret">Client Secret</Label>
-                  <Input
-                    id="clientSecret"
-                    type="password"
-                    placeholder="Seu LinkedIn Client Secret"
-                    value={settings.linkedinClientSecret}
-                    onChange={(e) => setSettings({...settings, linkedinClientSecret: e.target.value})}
-                  />
-                </div>
+                <p className="text-sm text-blue-700">
+                  As chaves Client ID e Client Secret do LinkedIn estão configuradas de forma segura através do Doppler.
+                  Não é necessário inserir essas informações manualmente.
+                </p>
               </div>
               
               <div className="space-y-2">
@@ -156,6 +143,9 @@ const Settings = () => {
                   value={settings.linkedinRedirectUri}
                   onChange={(e) => setSettings({...settings, linkedinRedirectUri: e.target.value})}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Configure a URL de redirecionamento para o OAuth do LinkedIn
+                </p>
               </div>
 
               <div className="flex items-center justify-between p-4 border rounded-lg">
