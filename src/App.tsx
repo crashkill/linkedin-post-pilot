@@ -8,9 +8,12 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Posts from "./pages/Posts";
+import Templates from "./pages/Templates";
+import Create from "./pages/Create";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LinkedInTestPublisher from "./components/LinkedInTestPublisher";
+import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
 
@@ -31,7 +34,9 @@ const App = () => (
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Layout>
+                  <Dashboard />
+                </Layout>
               </ProtectedRoute>
             } 
           />
@@ -39,7 +44,29 @@ const App = () => (
             path="/posts" 
             element={
               <ProtectedRoute>
-                <Posts />
+                <Layout>
+                  <Posts />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/templates" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Templates />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/create" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Create />
+                </Layout>
               </ProtectedRoute>
             } 
           />
@@ -47,7 +74,9 @@ const App = () => (
             path="/test-linkedin" 
             element={
               <ProtectedRoute>
-                <LinkedInTestPublisher />
+                <Layout>
+                  <LinkedInTestPublisher />
+                </Layout>
               </ProtectedRoute>
             } 
           />

@@ -1,24 +1,34 @@
-# Configuração do Doppler - LinkedIn Post Pilot
+# 🔐 Configuração do Doppler - LinkedIn Post Pilot
+
+> **Guia completo para configurar o Doppler e gerenciar segredos de forma segura**
 
 ## 📋 Pré-requisitos
 
-- Doppler CLI instalado (https://docs.doppler.com/docs/install-cli)
-- Conta no Doppler (https://doppler.com)
-- Acesso ao projeto `linkedin-post-pilot` no Doppler
+- Node.js instalado
+- Conta no [Doppler](https://doppler.com)
+- Acesso ao projeto Supabase (jhfypcjgmkdloyhtonwr)
 
-## 🚀 Configuração Inicial
+## 🚀 Instalação do Doppler CLI
 
-### 1. Instalar Doppler CLI
+### Windows (PowerShell como Administrador)
+
+```powershell
+# Método 1: Download direto
+Invoke-WebRequest -Uri "https://github.com/DopplerHQ/cli/releases/latest/download/doppler_windows_amd64.zip" -OutFile "doppler.zip"
+Expand-Archive -Path "doppler.zip" -DestinationPath "C:\Program Files\Doppler"
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\Doppler", "Machine")
+
+# Método 2: Via Chocolatey
+choco install doppler
+
+# Método 3: Via Scoop
+scoop install doppler
+```
+
+### Verificar Instalação
 
 ```bash
-# macOS
-brew install dopplerhq/cli/doppler
-
-# Linux
-curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh | sudo sh
-
-# Windows
-scoop install doppler
+doppler --version
 ```
 
 ### 2. Fazer Login no Doppler
@@ -47,6 +57,51 @@ doppler configure
 
 # Listar segredos disponíveis
 doppler secrets
+```
+
+## 🔑 Configuração de Segredos
+
+### Supabase (Projeto Atual: jhfypcjgmkdloyhtonwr)
+
+```bash
+# URL do Supabase
+doppler secrets set VITE_SUPABASE_URL="https://jhfypcjgmkdloyhtonwr.supabase.co"
+doppler secrets set SUPABASE_URL="https://jhfypcjgmkdloyhtonwr.supabase.co"
+
+# Chave anônima (obter do painel do Supabase)
+doppler secrets set VITE_SUPABASE_ANON_KEY="sua-chave-anonima-real"
+doppler secrets set SUPABASE_ANON_KEY="sua-chave-anonima-real"
+
+# Chave de serviço (CUIDADO: Muito sensível!)
+doppler secrets set SUPABASE_SERVICE_ROLE_KEY="sua-service-role-key-real"
+```
+
+### LinkedIn OAuth
+
+```bash
+doppler secrets set LINKEDIN_CLIENT_ID="seu-client-id"
+doppler secrets set LINKEDIN_CLIENT_SECRET="seu-client-secret"
+doppler secrets set LINKEDIN_REDIRECT_URI="http://localhost:8080/auth/linkedin/callback"
+```
+
+### APIs de IA
+
+```bash
+# Groq
+doppler secrets set GROQ_API_KEY="sua-groq-api-key"
+
+# Google Gemini
+doppler secrets set GEMINI_API_KEY="sua-gemini-api-key"
+
+# Hugging Face
+doppler secrets set HUGGINGFACE_API_KEY="sua-huggingface-api-key"
+```
+
+### Outros
+
+```bash
+doppler secrets set JWT_SECRET="$(openssl rand -base64 32)"
+doppler secrets set NODE_ENV="development"
 ```
 
 ## 🔐 Variáveis de Ambiente Necessárias
