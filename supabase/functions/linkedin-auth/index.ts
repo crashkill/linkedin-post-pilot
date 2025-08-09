@@ -8,7 +8,7 @@ const corsHeaders = {
 }
 
 interface LinkedInAuthRequest {
-  action: 'authorize' | 'callback' | 'disconnect'
+  action: 'authorize' | 'callback' | 'disconnect' | 'auto_connect'
   code?: string
   state?: string
   redirectUri?: string
@@ -199,6 +199,96 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: true,
+            profile: {
+              id: profileData.id,
+              name: `${Object.values(profileData.firstName.localized)[0]} ${Object.values(profileData.lastName.localized)[0]}`,
+              profilePicture: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier
+            }
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+
+      case 'auto_connect': {
+        // Auto-conectar usando ACCESS_TOKEN do Doppler
+        const accessToken = Deno.env.get('LINKEDIN_ACCESS_TOKEN')
+        
+        if (!accessToken) {
+          return new Response(
+            JSON.stringify({ error: 'ACCESS_TOKEN do LinkedIn não encontrado no Doppler' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        // Verificar se já existe integração ativa
+        const { data: existingIntegration } = await supabase
+          .from('linkedin_integrations')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single()
+
+        if (existingIntegration) {
+          return new Response(
+            JSON.stringify({ 
+              success: true,
+              message: 'Integração LinkedIn já existe',
+              profile: existingIntegration.profile_data
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        // Obter perfil do usuário usando ACCESS_TOKEN
+        const profileResponse = await fetch('https://api.linkedin.com/v2/people/~?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        })
+
+        if (!profileResponse.ok) {
+          console.error('Erro ao obter perfil LinkedIn com ACCESS_TOKEN:', await profileResponse.text())
+          return new Response(
+            JSON.stringify({ error: 'Falha ao obter perfil do usuário com ACCESS_TOKEN' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        const profileData: LinkedInProfile = await profileResponse.json()
+
+        // Salvar dados de integração no banco
+        const { error: insertError } = await supabase
+          .from('linkedin_integrations')
+          .insert({
+            user_id: user.id,
+            linkedin_id: profileData.id,
+            access_token: accessToken,
+            expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 dias
+            scope: 'r_liteprofile r_emailaddress w_member_social',
+            profile_data: {
+              firstName: profileData.firstName.localized,
+              lastName: profileData.lastName.localized,
+              profilePicture: profileData.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier
+            },
+            connected_at: new Date().toISOString(),
+            is_active: true
+          })
+
+        if (insertError) {
+          console.error('Erro ao salvar integração LinkedIn automática:', insertError)
+          return new Response(
+            JSON.stringify({ error: 'Falha ao salvar dados de integração automática' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true,
+            message: 'Auto-conexão LinkedIn realizada com sucesso',
             profile: {
               id: profileData.id,
               name: `${Object.values(profileData.firstName.localized)[0]} ${Object.values(profileData.lastName.localized)[0]}`,

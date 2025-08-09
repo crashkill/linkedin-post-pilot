@@ -19,7 +19,7 @@ INSERT INTO auth.users (
   'authenticated',
   'authenticated',
   'fabriciocardosolima@gmail.com',
-  crypt('Hitss123', gen_salt('bf')),
+  crypt('123456', gen_salt('bf')),
   NOW(),
   NOW(),
   NOW(),

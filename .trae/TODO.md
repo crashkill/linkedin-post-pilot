@@ -1,8 +1,12 @@
 # TODO:
 
-- [x] 15: Criar migração SQL para configurar bucket 'images' no Supabase Storage (priority: High)
-- [x] 16: Criar serviço de upload de imagens para Supabase Storage (src/services/imageStorageService.ts) (priority: High)
-- [x] 17: Configurar políticas RLS para o bucket de imagens (priority: High)
-- [x] 18: Atualizar LinkedInTestPublisher para usar Supabase Storage (priority: Medium)
-- [x] 19: Atualizar outros componentes que usam imagens para usar Supabase Storage (priority: Medium)
-- [x] 20: Testar upload e recuperação de imagens no Supabase Storage (priority: Medium)
+- [x] 1: Atualizar CLIENT_SECRET do LinkedIn no Doppler (priority: High)
+- [x] 2: Verificar credenciais do LinkedIn (CLIENT_ID, CLIENT_SECRET) (priority: High)
+- [x] 3: Testar integração com LinkedIn (priority: High)
+- [x] 4: Republicar post sobre DevOps (priority: High)
+- [x] 6: Finalizar e publicar post sobre DevOps no LinkedIn usando credenciais reais (priority: High)
+- [x] 7: Verificar se a publicação foi bem-sucedida e obter ID do post (priority: High)
+- [x] 8: Publicar efetivamente o post sobre DevOps no LinkedIn usando ACCESS_TOKEN válido (priority: High)
+- [x] 9: Verificar se a publicação foi bem-sucedida e confirmar ID do post (priority: High)
+- [x] 5: Configurar integração do LinkedIn no banco de dados (priority: Medium)
+- [ ] 10: Fazer commit das alterações no GitHub (**IN PROGRESS**) (priority: High)

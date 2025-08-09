@@ -10,28 +10,45 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Clock, Plus, Filter, Search, Edit, Trash2, Share, Eye, TrendingUp, MessageCircle, Heart, Sparkles, Wand2, Image, Loader2 } from "lucide-react";
 import aiService from "../services/aiService.js";
 import { postsService, type Post, type CreatePostData } from "../services/postsService";
+import { linkedinService } from "../services/linkedinService.js";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const Posts = () => {
+  const { isAuthenticated, loading: authLoading, user, session } = useAuth();
+  
+  // Debug logs
+  console.log('🔍 Posts Component - Estado de autenticação:', {
+    isAuthenticated,
+    authLoading,
+    user: user ? `${user.name} (${user.email})` : null,
+    session: !!session
+  });
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(true);
   const [newPost, setNewPost] = useState({
-    title: "",
-    content: "",
-    category: "",
+    title: "🚀 DevOps e Automação: Transformando a Infraestrutura Moderna",
+    content: "A revolução DevOps está redefinindo como construímos e gerenciamos infraestrutura! 🌟\n\nA automação não é mais um luxo, é uma necessidade para empresas que querem escalar com eficiência e confiabilidade:\n\n🔥 **DevOps Moderno - Pilares Fundamentais:**\n• Infrastructure as Code (IaC) com Terraform e Ansible\n• CI/CD pipelines automatizados\n• Containerização com Docker e Kubernetes\n• Monitoramento proativo e observabilidade\n• GitOps para deployment contínuo\n\n⚡ **Automação de Infraestrutura:**\n• Provisionamento automático de recursos\n• Auto-scaling baseado em demanda\n• Backup e disaster recovery automatizados\n• Security scanning integrado\n• Rollback automático em falhas\n\n💡 **Benefícios Transformadores:**\n✅ Redução de 90% em tempo de deployment\n✅ Diminuição significativa de erros humanos\n✅ Maior confiabilidade e disponibilidade\n✅ Custos otimizados com recursos dinâmicos\n✅ Equipes mais produtivas e focadas\n\n🎯 **O Futuro é Agora:**\nEmpresas que adotam DevOps e automação estão 5x mais rápidas no time-to-market e têm 3x menos incidentes em produção.\n\nA pergunta não é 'se' automatizar, mas 'quando' começar! 🚀\n\n#DevOps #Automation #Infrastructure #CloudComputing #Kubernetes #Docker #Terraform #CI_CD #TechLeadership #DigitalTransformation",
+    category: "tecnologia",
     scheduledDate: "",
-    aiTopic: ""
+    aiTopic: "DevOps e Automação de Infraestrutura Moderna"
   });
-  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<string | null>("https://trae-api-us.mchost.guru/api/ide/v1/text_to_image?prompt=Ultra-realistic%20modern%20DevOps%20control%20center%20with%20multiple%20monitors%20displaying%20Kubernetes%20dashboards%2C%20CI%2FCD%20pipelines%2C%20infrastructure%20monitoring%20graphs%2C%20Docker%20containers%2C%20automated%20deployment%20workflows%2C%20futuristic%20server%20room%20background%2C%20holographic%20data%20visualizations%2C%20professional%20DevOps%20engineer%20workspace%2C%20ambient%20blue%20lighting%2C%20high-tech%20atmosphere%2C%204K%20quality%2C%20photorealistic&image_size=landscape_16_9");
   const { toast } = useToast();
 
   // Carregar posts do usuário
   const loadPosts = async () => {
     try {
+      // Verificar se o usuário está autenticado
+      if (!isAuthenticated) {
+        console.log('Usuário não autenticado, aguardando...');
+        return;
+      }
+      
       setIsLoading(true);
       const userPosts = await postsService.getUserPosts();
       setPosts(userPosts);
@@ -49,8 +66,23 @@ const Posts = () => {
 
   // Carregar posts ao montar o componente
   useEffect(() => {
-    loadPosts();
-  }, []);
+    console.log('🔄 useEffect Posts - Verificando autenticação:', {
+      authLoading,
+      isAuthenticated,
+      user: user ? user.email : null
+    });
+    
+    // Aguardar a autenticação ser carregada
+    if (!authLoading && isAuthenticated) {
+      console.log('✅ Usuário autenticado, carregando posts...');
+      loadPosts();
+    } else if (!authLoading && !isAuthenticated) {
+      console.log('❌ Usuário não autenticado');
+      setIsLoading(false);
+    } else {
+      console.log('⏳ Aguardando autenticação...');
+    }
+  }, [authLoading, isAuthenticated, user]);
 
   // Salvar post no Supabase
   const savePost = async (postData: CreatePostData, isDraft: boolean = false) => {
@@ -65,17 +97,56 @@ const Posts = () => {
 
       const savedPost = await postsService.createPost(newPostData);
       
+      // Se não é rascunho, publicar automaticamente no LinkedIn
+      if (!isDraft && status === 'published') {
+        try {
+          console.log('🚀 Publicando automaticamente no LinkedIn...');
+          
+          // Verificar se o LinkedIn está conectado
+          const connectionStatus = await linkedinService.getConnectionStatus();
+          
+          if (connectionStatus.connected) {
+            // Publicar no LinkedIn
+            const linkedinResult = await linkedinService.publishPost(
+              savedPost.id,
+              savedPost.content,
+              savedPost.imageUrl
+            );
+            
+            console.log('✅ Post publicado no LinkedIn:', linkedinResult);
+            
+            toast({
+              title: "Sucesso Completo!",
+              description: "Post criado e publicado automaticamente no LinkedIn!",
+            });
+          } else {
+            console.log('⚠️ LinkedIn não conectado, apenas salvando post');
+            toast({
+              title: "Post Criado",
+              description: "Post criado com sucesso! Conecte o LinkedIn para publicação automática.",
+            });
+          }
+        } catch (linkedinError) {
+          console.error('Erro ao publicar no LinkedIn:', linkedinError);
+          toast({
+            title: "Post Criado",
+            description: "Post criado com sucesso, mas houve erro na publicação do LinkedIn.",
+            variant: "destructive"
+          });
+        }
+      } else {
+        toast({
+          title: "Sucesso",
+          description: `Post ${isDraft ? 'salvo como rascunho' : 'criado'} com sucesso!`,
+        });
+      }
+      
       // Atualizar lista de posts
       setPosts(prev => [savedPost, ...prev]);
       
       // Resetar formulário
       resetForm();
       setIsDialogOpen(false);
-      
-      toast({
-        title: "Sucesso",
-        description: `Post ${isDraft ? 'salvo como rascunho' : 'criado'} com sucesso!`,
-      });
       
       return savedPost;
     } catch (error) {
@@ -150,6 +221,10 @@ const Posts = () => {
 
   // Funções para geração com IA
   const generatePostWithAI = async () => {
+    console.log('🚀 generatePostWithAI chamada!');
+    console.log('📝 Tópico:', newPost.aiTopic);
+    console.log('🏷️ Categoria:', newPost.category);
+    
     if (!newPost.aiTopic.trim()) {
       toast({
         title: "Erro",
@@ -160,6 +235,7 @@ const Posts = () => {
     }
 
     setIsGenerating(true);
+    console.log('⏳ Iniciando geração...');
     try {
       const result = await aiService.generateCompletePost(newPost.aiTopic, newPost.category || "tecnologia");
       

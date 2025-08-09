@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Linkedin, CheckCircle, AlertCircle, RefreshCw, Settings, ExternalLink } from 'lucide-react'
+import { Linkedin, CheckCircle, AlertCircle, Settings, ExternalLink } from 'lucide-react'
 import { linkedinService } from '../services/linkedinService'
 import { toast } from 'sonner'
 
@@ -22,7 +22,6 @@ interface LinkedInStatusProps {
 const LinkedInStatus: React.FC<LinkedInStatusProps> = ({ onConnectionChange }) => {
   const [integration, setIntegration] = useState<LinkedInIntegration | null>(null)
   const [loading, setLoading] = useState(true)
-  const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
 
   useEffect(() => {
@@ -44,46 +43,7 @@ const LinkedInStatus: React.FC<LinkedInStatusProps> = ({ onConnectionChange }) =
     }
   }
 
-  const handleConnect = async () => {
-    try {
-      setConnecting(true)
-      const authUrl = await linkedinService.startAuth()
-      
-      // Abrir popup para autenticação
-      const popup = window.open(
-        authUrl,
-        'linkedin-auth',
-        'width=600,height=700,scrollbars=yes,resizable=yes'
-      )
-
-      // Monitorar o popup
-      const checkClosed = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(checkClosed)
-          setConnecting(false)
-          // Verificar se a conexão foi bem-sucedida
-          setTimeout(() => {
-            checkConnectionStatus()
-          }, 1000)
-        }
-      }, 1000)
-
-      // Timeout de 5 minutos
-      setTimeout(() => {
-        if (popup && !popup.closed) {
-          popup.close()
-          clearInterval(checkClosed)
-          setConnecting(false)
-          toast.error('Tempo limite para autenticação excedido')
-        }
-      }, 300000)
-
-    } catch (error) {
-      console.error('Erro ao conectar LinkedIn:', error)
-      toast.error('Erro ao conectar com LinkedIn')
-      setConnecting(false)
-    }
-  }
+  // Função removida - conexão agora é automática
 
   const handleDisconnect = async () => {
     try {
@@ -146,7 +106,7 @@ const LinkedInStatus: React.FC<LinkedInStatusProps> = ({ onConnectionChange }) =
           disabled={loading}
           className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <Settings className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -221,32 +181,11 @@ const LinkedInStatus: React.FC<LinkedInStatusProps> = ({ onConnectionChange }) =
 
           {/* Ações */}
           <div className="flex gap-2">
-            {isTokenExpired(integration.expires_at) ? (
-              <button
-                onClick={handleConnect}
-                disabled={connecting}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {connecting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
-                Reconectar
-              </button>
-            ) : (
-              <button
-                onClick={handleConnect}
-                disabled={connecting}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 text-sm font-medium rounded-md hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {connecting ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border border-blue-700 border-t-transparent"></div>
-                ) : (
-                  <RefreshCw className="w-4 h-4" />
-                )}
-                Atualizar Token
-              </button>
+            {isTokenExpired(integration.expires_at) && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 text-sm font-medium rounded-md">
+                <AlertCircle className="w-4 h-4" />
+                Token expirado - Reconexão automática em andamento
+              </div>
             )}
             
             <button
@@ -265,30 +204,17 @@ const LinkedInStatus: React.FC<LinkedInStatusProps> = ({ onConnectionChange }) =
         </div>
       ) : (
         <div className="text-center py-6">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Linkedin className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
           </div>
           
           <h4 className="text-sm font-semibold text-gray-900 mb-2">
-            Conecte sua conta LinkedIn
+            Conectando ao LinkedIn...
           </h4>
           
           <p className="text-xs text-gray-500 mb-4 max-w-sm mx-auto">
-            Conecte sua conta LinkedIn para publicar posts automaticamente e acompanhar métricas de engajamento.
+            Aguarde enquanto estabelecemos a conexão automática com sua conta LinkedIn.
           </p>
-          
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors mx-auto"
-          >
-            {connecting ? (
-              <div className="animate-spin rounded-full h-4 w-4 border border-white border-t-transparent"></div>
-            ) : (
-              <Linkedin className="w-4 h-4" />
-            )}
-            Conectar LinkedIn
-          </button>
         </div>
       )}
     </div>

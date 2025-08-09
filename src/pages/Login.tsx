@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/button'
@@ -9,17 +9,55 @@ import { Loader2, Mail, Lock, Linkedin } from 'lucide-react'
 import { useToast } from '../hooks/use-toast'
 
 export function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('fabriciocardosolima@gmail.com')
+  const [password, setPassword] = useState('123456')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false)
   
-  const { signIn } = useAuth()
+  const { signIn, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { toast } = useToast()
   
   const from = (location.state as { from?: string })?.from || '/dashboard'
+  
+  // Login automático ao carregar a página
+  useEffect(() => {
+    if (!autoLoginAttempted && !isAuthenticated) {
+      console.log('🔐 Tentando login automático...');
+      setAutoLoginAttempted(true);
+      handleAutoLogin();
+    } else if (isAuthenticated) {
+      console.log('✅ Usuário já autenticado, redirecionando...');
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, autoLoginAttempted, from, navigate]);
+  
+  const handleAutoLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await signIn('fabriciocardosolima@gmail.com', '123456');
+      
+      if (error) {
+        console.error('❌ Erro no login automático:', error.message);
+        setError('Login automático falhou. Faça login manualmente.');
+      } else {
+        console.log('✅ Login automático realizado com sucesso!');
+        toast({
+          title: 'Login automático realizado!',
+          description: 'Bem-vindo de volta ao LinkedIn Post Pilot'
+        });
+        navigate(from, { replace: true });
+      }
+    } catch (err) {
+      console.error('💥 Erro no login automático:', err);
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      setError(`Login automático falhou: ${message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

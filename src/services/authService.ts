@@ -89,6 +89,9 @@ class AuthService {
           session: await this.getCurrentSession(),
           loading: false
         })
+        
+        // Auto-conectar LinkedIn após criar usuário
+        await this.autoConnectLinkedIn()
       } else if (error) {
         console.error('Erro ao carregar perfil:', error)
       } else {
@@ -97,6 +100,9 @@ class AuthService {
           session: await this.getCurrentSession(),
           loading: false
         })
+        
+        // Auto-conectar LinkedIn após carregar usuário
+        await this.autoConnectLinkedIn()
       }
     } catch (error) {
       console.error('Erro ao carregar usuário:', error)
@@ -237,6 +243,56 @@ class AuthService {
 
   hasLinkedInConnected(): boolean {
     return !!this.currentState.user?.linkedin_token
+  }
+
+  // Auto-conectar LinkedIn usando credenciais do Doppler
+  private async autoConnectLinkedIn() {
+    try {
+      if (!this.currentState.user) {
+        console.log('Usuário não autenticado, pulando auto-conexão LinkedIn')
+        return
+      }
+
+      console.log('🔗 Iniciando auto-conexão LinkedIn...')
+
+      // Chamar Edge Function para auto-conectar usando ACCESS_TOKEN do Doppler
+      const session = await this.getCurrentSession()
+      if (!session) {
+        console.error('Sessão não encontrada para auto-conexão LinkedIn')
+        return
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/linkedin-auth`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          action: 'auto_connect'
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Erro na auto-conexão LinkedIn:', errorData)
+        return
+      }
+
+      const result = await response.json()
+      console.log('✅ Auto-conexão LinkedIn realizada:', result)
+      
+      // Atualizar estado do usuário com dados do LinkedIn
+      if (result.success && result.profile) {
+        await this.updateProfile({
+          linkedin_token: 'connected',
+          linkedin_profile_id: result.profile.id
+        })
+      }
+
+    } catch (error) {
+      console.error('Erro na auto-conexão LinkedIn:', error)
+    }
   }
 }
 
