@@ -22,9 +22,10 @@ class AuthService {
     session: null,
     loading: true
   }
+  private initializationPromise: Promise<void>
 
   constructor() {
-    this.initialize()
+    this.initializationPromise = this.initialize()
   }
 
   private async initialize() {
@@ -125,6 +126,10 @@ class AuthService {
   }
 
   // Métodos públicos
+  async waitForInitialization(): Promise<void> {
+    await this.initializationPromise
+  }
+
   getState(): AuthState {
     return this.currentState
   }
@@ -237,7 +242,13 @@ class AuthService {
     })
   }
 
-  isAuthenticated(): boolean {
+  async isAuthenticated(): Promise<boolean> {
+    await this.initializationPromise
+    return !!this.currentState.user && !!this.currentState.session
+  }
+
+  // Método síncrono para verificação rápida (sem aguardar inicialização)
+  isAuthenticatedSync(): boolean {
     return !!this.currentState.user && !!this.currentState.session
   }
 

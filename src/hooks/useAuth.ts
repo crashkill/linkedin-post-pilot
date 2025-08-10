@@ -17,7 +17,7 @@ export function useAuth() {
     user: authState.user,
     session: authState.session,
     loading: authState.loading,
-    isAuthenticated: authService.isAuthenticated(),
+    isAuthenticated: authService.isAuthenticatedSync(),
     hasLinkedInConnected: authService.hasLinkedInConnected(),
 
     // Métodos

@@ -1,15 +1,12 @@
 // Serviço para integração com LinkedIn API
 // Gerencia autenticação OAuth e publicação de posts
 
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
 
 class LinkedInService {
   constructor() {
-    // Configuração do cliente Supabase
-    this.supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    )
+    // Usar cliente Supabase centralizado
+    this.supabase = supabase
     
     // URLs das Edge Functions
     this.baseUrl = import.meta.env.VITE_SUPABASE_URL

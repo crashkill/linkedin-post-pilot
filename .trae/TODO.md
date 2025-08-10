@@ -8,5 +8,5 @@
 - [x] 7: Verificar se a publicação foi bem-sucedida e obter ID do post (priority: High)
 - [x] 8: Publicar efetivamente o post sobre DevOps no LinkedIn usando ACCESS_TOKEN válido (priority: High)
 - [x] 9: Verificar se a publicação foi bem-sucedida e confirmar ID do post (priority: High)
+- [x] 10: Fazer commit das alterações no GitHub (priority: High)
 - [x] 5: Configurar integração do LinkedIn no banco de dados (priority: Medium)
-- [ ] 10: Fazer commit das alterações no GitHub (**IN PROGRESS**) (priority: High)

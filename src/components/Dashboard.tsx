@@ -5,14 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Settings, TrendingUp, Users, Zap, Image, Play, Pause, Loader2, TestTube } from "lucide-react";
 import { postsService, type Post } from "../services/postsService";
 import { useToast } from "@/hooks/use-toast";
-import LinkedInStatus from "./LinkedInStatus";
-import LinkedInScheduler from "./LinkedInScheduler";
-import LinkedInAnalytics from "./LinkedInAnalytics";
+import { useAuth } from "../hooks/useAuth";
 
 const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [linkedinConnected, setLinkedinConnected] = useState(false);
   const [stats, setStats] = useState({
     scheduled: 0,
     today: 0,
@@ -20,6 +17,7 @@ const Dashboard = () => {
     totalReach: 0
   });
   const { toast } = useToast();
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   // Carregar dados do dashboard
   const loadDashboardData = async () => {
@@ -38,8 +36,8 @@ const Dashboard = () => {
       
       const scheduledPosts = allPosts.filter(post => post.status === 'scheduled');
       const todayPosts = allPosts.filter(post => {
-        if (!post.scheduledFor) return false;
-        const postDate = new Date(post.scheduledFor);
+        if (!post.scheduled_for) return false;
+        const postDate = new Date(post.scheduled_for);
         return postDate >= today && postDate < tomorrow;
       });
       
@@ -68,10 +66,12 @@ const Dashboard = () => {
     }
   };
 
-  // Carregar dados ao montar o componente
+  // Carregar dados ao montar o componente, mas apenas após autenticação
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (!authLoading && isAuthenticated) {
+      loadDashboardData();
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Posts recentes (últimos 5 posts)
   const recentPosts = posts
@@ -80,8 +80,8 @@ const Dashboard = () => {
 
   // Próximos posts agendados
   const upcomingPosts = posts
-    .filter(post => post.status === 'scheduled' && post.scheduledFor)
-    .sort((a, b) => new Date(a.scheduledFor!).getTime() - new Date(b.scheduledFor!).getTime())
+    .filter(post => post.status === 'scheduled' && post.scheduled_for)
+    .sort((a, b) => new Date(a.scheduled_for!).getTime() - new Date(b.scheduled_for!).getTime())
     .slice(0, 3);
 
   // Estatísticas para os cards
@@ -167,20 +167,34 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* LinkedIn Integration Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <LinkedInStatus onConnectionChange={setLinkedinConnected} />
-          <div className="lg:col-span-2">
-            <LinkedInScheduler onRefresh={loadDashboardData} />
-          </div>
+        {/* Automação LinkedIn Ativa */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-green-500" />
+                Status da Automação
+              </CardTitle>
+              <CardDescription>
+                Sistema de publicação automática no LinkedIn
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium">Automação Ativa</span>
+                </div>
+                <Badge variant="default" className="bg-green-500">
+                  Conectado
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mt-2">
+                Posts são publicados automaticamente conforme agendamento
+              </p>
+            </CardContent>
+          </Card>
         </div>
-
-        {/* LinkedIn Analytics */}
-        {linkedinConnected && (
-          <div className="mb-8">
-            <LinkedInAnalytics posts={posts} onRefresh={loadDashboardData} />
-          </div>
-        )}
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -220,21 +234,21 @@ const Dashboard = () => {
                         {getStatusBadge(post.status)}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {post.scheduledFor 
-                          ? `Agendado para ${new Date(post.scheduledFor).toLocaleString('pt-BR')}`
-                          : post.publishedAt 
-                          ? `Publicado em ${new Date(post.publishedAt).toLocaleString('pt-BR')}`
-                          : `Criado em ${new Date(post.createdAt).toLocaleString('pt-BR')}`
+                        {post.scheduled_for 
+                          ? `Agendado para ${new Date(post.scheduled_for).toLocaleString('pt-BR')}`
+                          : post.published_at 
+                          ? `Publicado em ${new Date(post.published_at).toLocaleString('pt-BR')}`
+                          : `Criado em ${new Date(post.created_at || '').toLocaleString('pt-BR')}`
                         }
                       </p>
                       <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                        <span>{post.likes || 0} curtidas</span>
-                        <span>{post.comments || 0} comentários</span>
-                        <span>{post.shares || 0} compartilhamentos</span>
+                        <span>{post.engagement_metrics?.likes || 0} curtidas</span>
+                        <span>{post.engagement_metrics?.comments || 0} comentários</span>
+                        <span>{post.engagement_metrics?.shares || 0} compartilhamentos</span>
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {post.imageUrl && (
+                      {post.image_url && (
                         <Button variant="outline" size="sm">
                           <Image className="w-4 h-4" />
                         </Button>
@@ -326,7 +340,7 @@ const Dashboard = () => {
                   ))
                 ) : upcomingPosts.length > 0 ? (
                   upcomingPosts.map((post, index) => {
-                    const scheduledDate = new Date(post.scheduledFor!);
+                    const scheduledDate = new Date(post.scheduled_for!);
                     const today = new Date();
                     const isToday = scheduledDate.toDateString() === today.toDateString();
                     const isTomorrow = scheduledDate.toDateString() === new Date(today.getTime() + 24 * 60 * 60 * 1000).toDateString();

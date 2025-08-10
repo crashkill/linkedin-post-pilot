@@ -2,6 +2,7 @@
 // Gerencia todas as operações CRUD dos posts
 
 import { supabase } from '../lib/supabase'
+import { authService } from './authService'
 
 export interface Post {
   id?: string
@@ -40,11 +41,14 @@ export interface UpdatePostData extends Partial<CreatePostData> {
 class PostsService {
   // Criar um novo post
   async createPost(postData: CreatePostData): Promise<Post> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { data, error } = await supabase
       .from('posts')
@@ -66,11 +70,14 @@ class PostsService {
 
   // Buscar todos os posts do usuário
   async getUserPosts(): Promise<Post[]> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { data, error } = await supabase
       .from('posts')
@@ -114,11 +121,14 @@ class PostsService {
 
   // Atualizar post
   async updatePost(updateData: UpdatePostData): Promise<Post> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { id, ...postData } = updateData
 
@@ -143,11 +153,14 @@ class PostsService {
 
   // Deletar post
   async deletePost(id: string): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { error } = await supabase
       .from('posts')
@@ -163,11 +176,14 @@ class PostsService {
 
   // Buscar posts por status
   async getPostsByStatus(status: 'draft' | 'scheduled' | 'published'): Promise<Post[]> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { data, error } = await supabase
       .from('posts')
@@ -186,11 +202,14 @@ class PostsService {
 
   // Buscar posts por categoria
   async getPostsByCategory(category: string): Promise<Post[]> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { data, error } = await supabase
       .from('posts')
@@ -212,11 +231,14 @@ class PostsService {
     id: string, 
     metrics: { likes?: number; comments?: number; shares?: number; views?: number }
   ): Promise<Post> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     // Primeiro, buscar as métricas atuais
     const currentPost = await this.getPostById(id)
@@ -291,11 +313,14 @@ class PostsService {
 
   // Buscar posts recentes (últimos 5)
   async getRecentPosts(): Promise<Post[]> {
-    const { data: { user } } = await supabase.auth.getUser()
+    await authService.waitForInitialization()
+    const authState = authService.getState()
     
-    if (!user) {
+    if (!authState.user || !await authService.isAuthenticated()) {
       throw new Error('Usuário não autenticado')
     }
+    
+    const user = authState.user
 
     const { data, error } = await supabase
       .from('posts')

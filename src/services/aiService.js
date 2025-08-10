@@ -1,15 +1,12 @@
 // Serviço de IA para geração de conteúdo e imagens
 // Integra com Groq, Hugging Face e Google AI Studio via Supabase Edge Functions
 
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
 
 class AIService {
   constructor() {
-    // Configuração do cliente Supabase
-    this.supabase = createClient(
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    )
+    // Usar cliente Supabase centralizado
+    this.supabase = supabase
     
     // URLs das Edge Functions
     this.baseUrl = import.meta.env.VITE_SUPABASE_URL
