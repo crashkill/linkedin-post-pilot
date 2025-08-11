@@ -14,12 +14,15 @@ export interface Post {
   scheduled_for?: string
   image_url?: string
   hashtags?: string[]
-  engagement_metrics?: {
-    likes: number
-    comments: number
-    shares: number
-    views: number
-  }
+  likes?: number
+  comments?: number
+  shares?: number
+  views?: number
+  linkedin_post_id?: string
+  ai_generated?: boolean
+  ai_topic?: string
+  published_to_linkedin?: boolean
+  linkedin_published_at?: string
   created_at?: string
   updated_at?: string
 }

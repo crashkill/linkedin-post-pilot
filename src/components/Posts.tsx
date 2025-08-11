@@ -16,14 +16,6 @@ import { useAuth } from "@/hooks/useAuth";
 
 const Posts = () => {
   const { isAuthenticated, loading: authLoading, user, session } = useAuth();
-  
-  // Debug logs
-  console.log('🔍 Posts Component - Estado de autenticação:', {
-    isAuthenticated,
-    authLoading,
-    user: user ? `${user.name} (${user.email})` : null,
-    session: !!session
-  });
   const [selectedTab, setSelectedTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -45,7 +37,6 @@ const Posts = () => {
     try {
       // Verificar se o usuário está autenticado
       if (!isAuthenticated) {
-        console.log('Usuário não autenticado, aguardando...');
         return;
       }
       
@@ -66,23 +57,12 @@ const Posts = () => {
 
   // Carregar posts ao montar o componente
   useEffect(() => {
-    console.log('🔄 useEffect Posts - Verificando autenticação:', {
-      authLoading,
-      isAuthenticated,
-      user: user ? user.email : null
-    });
-    
-    // Aguardar a autenticação ser carregada
     if (!authLoading && isAuthenticated) {
-      console.log('✅ Usuário autenticado, carregando posts...');
       loadPosts();
     } else if (!authLoading && !isAuthenticated) {
-      console.log('❌ Usuário não autenticado');
       setIsLoading(false);
-    } else {
-      console.log('⏳ Aguardando autenticação...');
     }
-  }, [authLoading, isAuthenticated, user]);
+  }, [authLoading, isAuthenticated]);
 
   // Salvar post no Supabase
   const savePost = async (postData: CreatePostData, isDraft: boolean = false) => {
@@ -113,14 +93,14 @@ const Posts = () => {
               savedPost.imageUrl
             );
             
-            console.log('✅ Post publicado no LinkedIn:', linkedinResult);
+            // Post publicado no LinkedIn com sucesso
             
             toast({
               title: "Sucesso Completo!",
               description: "Post criado e publicado automaticamente no LinkedIn!",
             });
           } else {
-            console.log('⚠️ LinkedIn não conectado, apenas salvando post');
+            // LinkedIn não conectado, apenas salvando post
             toast({
               title: "Post Criado",
               description: "Post criado com sucesso! Conecte o LinkedIn para publicação automática.",
@@ -221,9 +201,6 @@ const Posts = () => {
 
   // Funções para geração com IA
   const generatePostWithAI = async () => {
-    console.log('🚀 generatePostWithAI chamada!');
-    console.log('📝 Tópico:', newPost.aiTopic);
-    console.log('🏷️ Categoria:', newPost.category);
     
     if (!newPost.aiTopic.trim()) {
       toast({
@@ -235,7 +212,6 @@ const Posts = () => {
     }
 
     setIsGenerating(true);
-    console.log('⏳ Iniciando geração...');
     try {
       const result = await aiService.generateCompletePost(newPost.aiTopic, newPost.category || "tecnologia");
       

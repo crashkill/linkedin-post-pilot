@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Settings, TrendingUp, Users, Zap, Image, Play, Pause, Loader2, TestTube } from "lucide-react";
+import { Calendar, Clock, TrendingUp, Users, Zap, Image, Play, Pause, Loader2 } from "lucide-react";
 import { postsService, type Post } from "../services/postsService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "../hooks/useAuth";
@@ -75,7 +75,7 @@ const Dashboard = () => {
 
   // Posts recentes (últimos 5 posts)
   const recentPosts = posts
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
     .slice(0, 5);
 
   // Próximos posts agendados
@@ -119,14 +119,6 @@ const Dashboard = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" size="lg" onClick={() => window.location.href = '/test-linkedin'}>
-              <TestTube className="w-4 h-4" />
-              Teste LinkedIn
-            </Button>
-            <Button variant="outline" size="lg">
-              <Settings className="w-4 h-4" />
-              Configurações
-            </Button>
             <Button variant="hero" size="lg">
               <Zap className="w-4 h-4" />
               Novo Post
@@ -253,9 +245,7 @@ const Dashboard = () => {
                           <Image className="w-4 h-4" />
                         </Button>
                       )}
-                      <Button variant="outline" size="sm">
-                        <Settings className="w-4 h-4" />
-                      </Button>
+
                     </div>
                   </div>
                 ))
@@ -312,7 +302,6 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">2 configurados</p>
                   </div>
                   <Button variant="outline" size="sm">
-                    <Settings className="w-4 h-4" />
                     Gerenciar
                   </Button>
                 </div>

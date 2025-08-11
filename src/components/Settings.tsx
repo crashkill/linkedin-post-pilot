@@ -1,62 +1,60 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Settings as SettingsIcon, 
-  Linkedin, 
-  Bot, 
-  Clock, 
-  Webhook, 
-  Key, 
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Settings as SettingsIcon,
+  Linkedin,
+  Clock,
+  Brain,
+  Webhook,
+  Shield,
   Save,
   TestTube,
-  Calendar,
-  ImageIcon,
-  Globe,
-  Shield
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+  ExternalLink,
+  AlertCircle,
+  CheckCircle,
+  Loader2
+} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import LinkedInStatus from './LinkedInStatus';
 
 const Settings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
-    // LinkedIn Configuration
-    linkedinRedirectUri: "",
+    // LinkedIn Settings
+    linkedinClientId: '',
+    linkedinClientSecret: '',
+    linkedinRedirectUri: 'http://localhost:8080/auth/linkedin/callback',
     
-    // Post Scheduling
+    // Scheduling Settings
     postsPerDay: 3,
-    postTimes: ["09:00", "14:00", "18:00"],
-    timezone: "America/Sao_Paulo",
+    timezone: 'America/Sao_Paulo',
+    postTimes: ['09:00', '14:00', '18:00'],
     autoPublish: true,
     
-    // AI Configuration
-    openaiApiKey: "",
-    aiModel: "gpt-4",
-    contentTone: "professional",
-    useImageGeneration: true,
-    imageStyle: "professional",
+    // AI Settings
+    openaiApiKey: '',
+    aiModel: 'gpt-4',
+    contentTone: 'professional',
+    useImageGeneration: false,
+    imageStyle: 'professional',
+    contentCategories: ['technology', 'business'],
     
-    // Webhook Configuration
+    // Webhook Settings
     webhookEnabled: false,
-    webhookUrl: "",
-    webhookSecret: "",
+    webhookUrl: '',
+    webhookSecret: '',
     
-    // Content Preferences
-    contentCategories: ["technology", "ai", "innovation"],
-    hashtagStrategy: "automatic",
-    maxHashtags: 5,
-    
-    // Security
+    // Security Settings
     twoFactorEnabled: false,
-    apiAccessEnabled: true,
+    apiAccessEnabled: false
   });
 
   const handleSaveSettings = (section: string) => {
@@ -66,482 +64,411 @@ const Settings = () => {
     });
   };
 
-  const handleTestConnection = (service: string) => {
-    toast({
-      title: "Testando conexão",
-      description: `Testando conexão com ${service}...`,
-    });
-  };
+  const contentCategories = [
+    'technology', 'business', 'marketing', 'design', 'development',
+    'ai', 'data-science', 'leadership', 'innovation', 'productivity'
+  ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+        <div className="p-2 bg-primary rounded-lg">
           <SettingsIcon className="w-5 h-5 text-primary-foreground" />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Configurações</h1>
-          <p className="text-muted-foreground">
-            Configure sua plataforma de automação do LinkedIn
-          </p>
+          <p className="text-muted-foreground">Gerencie suas preferências e integrações</p>
         </div>
       </div>
 
-      <Tabs defaultValue="linkedin" className="space-y-6">
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="linkedin">
-            <Linkedin className="w-4 h-4 mr-2" />
-            LinkedIn
-          </TabsTrigger>
-          <TabsTrigger value="scheduling">
-            <Clock className="w-4 h-4 mr-2" />
-            Agendamento
-          </TabsTrigger>
-          <TabsTrigger value="ai">
-            <Bot className="w-4 h-4 mr-2" />
-            IA
-          </TabsTrigger>
-          <TabsTrigger value="webhook">
-            <Webhook className="w-4 h-4 mr-2" />
-            Webhooks
-          </TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="w-4 h-4 mr-2" />
-            Segurança
-          </TabsTrigger>
-        </TabsList>
+      {/* LinkedIn Integration */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Linkedin className="w-5 h-5 text-blue-600" />
+            <CardTitle>Integração LinkedIn</CardTitle>
+          </div>
+          <CardDescription>
+            Configure sua conexão com o LinkedIn para publicação automática
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <LinkedInStatus />
+          
+          <Separator />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientId">Client ID</Label>
+              <Input
+                id="clientId"
+                type="password"
+                placeholder="Seu LinkedIn Client ID"
+                value={settings.linkedinClientId}
+                onChange={(e) => setSettings({...settings, linkedinClientId: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="clientSecret">Client Secret</Label>
+              <Input
+                id="clientSecret"
+                type="password"
+                placeholder="Seu LinkedIn Client Secret"
+                value={settings.linkedinClientSecret}
+                onChange={(e) => setSettings({...settings, linkedinClientSecret: e.target.value})}
+              />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="redirectUri">Redirect URI</Label>
+            <Input
+              id="redirectUri"
+              placeholder="URL de callback"
+              value={settings.linkedinRedirectUri}
+              onChange={(e) => setSettings({...settings, linkedinRedirectUri: e.target.value})}
+            />
+            <p className="text-sm text-muted-foreground">
+              Configure esta URL no seu app LinkedIn Developer
+            </p>
+          </div>
+          
+          <div className="flex gap-2">
+            <Button onClick={() => handleSaveSettings("LinkedIn")}>
+              <Save className="w-4 h-4 mr-2" />
+              Salvar Configurações
+            </Button>
+            <Button variant="outline">
+              <TestTube className="w-4 h-4 mr-2" />
+              Testar Conexão
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* LinkedIn Configuration */}
-        <TabsContent value="linkedin">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Linkedin className="w-5 h-5 text-blue-600" />
-                Configuração do LinkedIn
-              </CardTitle>
-              <CardDescription>
-                Configure as credenciais da API do LinkedIn para publicação automática
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Key className="w-4 h-4 text-blue-600" />
-                  <h4 className="font-medium text-blue-900">Credenciais Configuradas</h4>
+      {/* Scheduling Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-green-600" />
+            <CardTitle>Agendamento</CardTitle>
+          </div>
+          <CardDescription>
+            Configure quando e como seus posts serão publicados
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Posts por dia</Label>
+              <Select value={settings.postsPerDay.toString()} onValueChange={(value) => setSettings({...settings, postsPerDay: parseInt(value)})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 post</SelectItem>
+                  <SelectItem value="2">2 posts</SelectItem>
+                  <SelectItem value="3">3 posts</SelectItem>
+                  <SelectItem value="5">5 posts</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Fuso horário</Label>
+              <Select value={settings.timezone} onValueChange={(value) => setSettings({...settings, timezone: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="America/Sao_Paulo">São Paulo (GMT-3)</SelectItem>
+                  <SelectItem value="America/New_York">Nova York (GMT-5)</SelectItem>
+                  <SelectItem value="Europe/London">Londres (GMT+0)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Horários de publicação</Label>
+            <div className="flex gap-2 flex-wrap">
+              {settings.postTimes.map((time, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={time}
+                    onChange={(e) => {
+                      const newTimes = [...settings.postTimes];
+                      newTimes[index] = e.target.value;
+                      setSettings({...settings, postTimes: newTimes});
+                    }}
+                    className="w-32"
+                  />
                 </div>
-                <p className="text-sm text-blue-700">
-                  As chaves Client ID e Client Secret do LinkedIn estão configuradas de forma segura através do Doppler.
-                  Não é necessário inserir essas informações manualmente.
-                </p>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="autoPublish"
+              checked={settings.autoPublish}
+              onCheckedChange={(checked) => setSettings({...settings, autoPublish: checked})}
+            />
+            <Label htmlFor="autoPublish">Publicação automática</Label>
+          </div>
+          
+          <Button onClick={() => handleSaveSettings("Agendamento")}>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Configurações
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* AI Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-600" />
+            <CardTitle>Inteligência Artificial</CardTitle>
+          </div>
+          <CardDescription>
+            Configure as preferências de geração de conteúdo com IA
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="openaiKey">OpenAI API Key</Label>
+            <Input
+              id="openaiKey"
+              type="password"
+              placeholder="sk-..."
+              value={settings.openaiApiKey}
+              onChange={(e) => setSettings({...settings, openaiApiKey: e.target.value})}
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Modelo de IA</Label>
+              <Select value={settings.aiModel} onValueChange={(value) => setSettings({...settings, aiModel: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="gpt-4">GPT-4</SelectItem>
+                  <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                  <SelectItem value="claude-3">Claude 3</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Tom do conteúdo</Label>
+              <Select value={settings.contentTone} onValueChange={(value) => setSettings({...settings, contentTone: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="professional">Profissional</SelectItem>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="friendly">Amigável</SelectItem>
+                  <SelectItem value="authoritative">Autoritativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="useImageGeneration"
+                checked={settings.useImageGeneration}
+                onCheckedChange={(checked) => setSettings({...settings, useImageGeneration: checked})}
+              />
+              <Label htmlFor="useImageGeneration">Gerar imagens automaticamente</Label>
+            </div>
+            
+            {settings.useImageGeneration && (
+              <div className="space-y-2 ml-6">
+                <Label>Estilo das imagens</Label>
+                <Select value={settings.imageStyle} onValueChange={(value) => setSettings({...settings, imageStyle: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="professional">Profissional</SelectItem>
+                    <SelectItem value="creative">Criativo</SelectItem>
+                    <SelectItem value="minimalist">Minimalista</SelectItem>
+                    <SelectItem value="modern">Moderno</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Categorias de conteúdo preferidas</Label>
+            <div className="flex gap-2 flex-wrap">
+              {contentCategories.map((category) => (
+                <Badge
+                  key={category}
+                  variant={settings.contentCategories.includes(category) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => {
+                    const newCategories = settings.contentCategories.includes(category)
+                      ? settings.contentCategories.filter(c => c !== category)
+                      : [...settings.contentCategories, category];
+                    setSettings({...settings, contentCategories: newCategories});
+                  }}
+                >
+                  {category}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          
+          <Button onClick={() => handleSaveSettings("IA")}>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Configurações
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Webhook Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Webhook className="w-5 h-5 text-orange-600" />
+            <CardTitle>Webhooks</CardTitle>
+          </div>
+          <CardDescription>
+            Configure notificações automáticas para eventos importantes
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="webhookEnabled"
+              checked={settings.webhookEnabled}
+              onCheckedChange={(checked) => setSettings({...settings, webhookEnabled: checked})}
+            />
+            <Label htmlFor="webhookEnabled">Ativar webhooks</Label>
+          </div>
+          
+          {settings.webhookEnabled && (
+            <div className="space-y-4 ml-6">
+              <div className="space-y-2">
+                <Label htmlFor="webhookUrl">URL do Webhook</Label>
+                <Input
+                  id="webhookUrl"
+                  placeholder="https://seu-site.com/webhook"
+                  value={settings.webhookUrl}
+                  onChange={(e) => setSettings({...settings, webhookUrl: e.target.value})}
+                />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="redirectUri">Redirect URI</Label>
+                <Label htmlFor="webhookSecret">Secret (opcional)</Label>
                 <Input
-                  id="redirectUri"
-                  placeholder="https://yourapp.com/auth/linkedin/callback"
-                  value={settings.linkedinRedirectUri}
-                  onChange={(e) => setSettings({...settings, linkedinRedirectUri: e.target.value})}
+                  id="webhookSecret"
+                  type="password"
+                  placeholder="Chave secreta para validação"
+                  value={settings.webhookSecret}
+                  onChange={(e) => setSettings({...settings, webhookSecret: e.target.value})}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Configure a URL de redirecionamento para o OAuth do LinkedIn
+              </div>
+              
+              <div className="p-4 bg-muted rounded-lg">
+                <h4 className="font-medium mb-2">Eventos disponíveis:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Post publicado com sucesso</li>
+                  <li>• Erro na publicação</li>
+                  <li>• Novo agendamento criado</li>
+                  <li>• Limite de API atingido</li>
+                </ul>
+              </div>
+            </div>
+          )}
+          
+          <Button onClick={() => handleSaveSettings("Webhooks")}>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Configurações
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Security Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-red-600" />
+            <CardTitle>Configurações de Segurança</CardTitle>
+          </div>
+          <CardDescription>
+            Gerencie a segurança da sua conta e acesso à API
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Autenticação de dois fatores</Label>
+                <p className="text-sm text-muted-foreground">
+                  Adicione uma camada extra de segurança à sua conta
                 </p>
               </div>
-
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="space-y-2">
-                  <h4 className="font-medium">Status da Conexão</h4>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Desconectado</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Configure as credenciais e teste a conexão
-                  </p>
-                </div>
-                <Button 
-                  variant="outline"
-                  onClick={() => handleTestConnection("LinkedIn")}
-                >
-                  <TestTube className="w-4 h-4 mr-2" />
-                  Testar Conexão
-                </Button>
+              <Switch
+                checked={settings.twoFactorEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, twoFactorEnabled: checked})}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Acesso à API</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permitir acesso programático via API REST
+                </p>
               </div>
-
-              <div className="flex gap-2">
-                <Button onClick={() => handleSaveSettings("LinkedIn")}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Salvar Configurações
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Scheduling Configuration */}
-        <TabsContent value="scheduling">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                Configuração de Agendamento
-              </CardTitle>
-              <CardDescription>
-                Configure quando e com que frequência os posts serão publicados
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="postsPerDay">Posts por dia</Label>
-                    <Select value={settings.postsPerDay.toString()} onValueChange={(value) => setSettings({...settings, postsPerDay: parseInt(value)})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 post</SelectItem>
-                        <SelectItem value="2">2 posts</SelectItem>
-                        <SelectItem value="3">3 posts</SelectItem>
-                        <SelectItem value="4">4 posts</SelectItem>
-                        <SelectItem value="5">5 posts</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Fuso Horário</Label>
-                    <Select value={settings.timezone} onValueChange={(value) => setSettings({...settings, timezone: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/Sao_Paulo">São Paulo (GMT-3)</SelectItem>
-                        <SelectItem value="America/New_York">Nova York (GMT-5)</SelectItem>
-                        <SelectItem value="Europe/London">Londres (GMT+0)</SelectItem>
-                        <SelectItem value="Asia/Tokyo">Tóquio (GMT+9)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+              <Switch
+                checked={settings.apiAccessEnabled}
+                onCheckedChange={(checked) => setSettings({...settings, apiAccessEnabled: checked})}
+              />
+            </div>
+            
+            {settings.apiAccessEnabled && (
+              <div className="ml-6 p-4 bg-muted rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Label>Sua API Key</Label>
+                  <Badge variant="secondary">Ativa</Badge>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <Label>Horários de Publicação</Label>
-                    {settings.postTimes.map((time, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <Input
-                          type="time"
-                          value={time}
-                          onChange={(e) => {
-                            const newTimes = [...settings.postTimes];
-                            newTimes[index] = e.target.value;
-                            setSettings({...settings, postTimes: newTimes});
-                          }}
-                        />
-                        <Badge variant="secondary">Post {index + 1}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h4 className="font-medium">Publicação Automática</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Publicar automaticamente nos horários configurados
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.autoPublish}
-                  onCheckedChange={(checked) => setSettings({...settings, autoPublish: checked})}
-                />
-              </div>
-
-              <Button onClick={() => handleSaveSettings("Agendamento")}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* AI Configuration */}
-        <TabsContent value="ai">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-primary" />
-                Configuração de IA
-              </CardTitle>
-              <CardDescription>
-                Configure a inteligência artificial para geração de conteúdo e imagens
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="openaiKey">OpenAI API Key</Label>
+                <div className="flex gap-2">
                   <Input
-                    id="openaiKey"
-                    type="password"
-                    placeholder="sk-..."
-                    value={settings.openaiApiKey}
-                    onChange={(e) => setSettings({...settings, openaiApiKey: e.target.value})}
+                    value="sk-1234567890abcdef..."
+                    readOnly
+                    className="font-mono text-sm"
                   />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="aiModel">Modelo de IA</Label>
-                    <Select value={settings.aiModel} onValueChange={(value) => setSettings({...settings, aiModel: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="gpt-4">GPT-4</SelectItem>
-                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                        <SelectItem value="gpt-4-turbo">GPT-4 Turbo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="contentTone">Tom do Conteúdo</Label>
-                    <Select value={settings.contentTone} onValueChange={(value) => setSettings({...settings, contentTone: value})}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="professional">Profissional</SelectItem>
-                        <SelectItem value="casual">Casual</SelectItem>
-                        <SelectItem value="enthusiastic">Entusiástico</SelectItem>
-                        <SelectItem value="educational">Educativo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <ImageIcon className="w-4 h-4" />
-                        Geração de Imagens
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        Gerar imagens automaticamente para os posts
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.useImageGeneration}
-                      onCheckedChange={(checked) => setSettings({...settings, useImageGeneration: checked})}
-                    />
-                  </div>
-
-                  {settings.useImageGeneration && (
-                    <div className="space-y-2">
-                      <Label htmlFor="imageStyle">Estilo das Imagens</Label>
-                      <Select value={settings.imageStyle} onValueChange={(value) => setSettings({...settings, imageStyle: value})}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Profissional</SelectItem>
-                          <SelectItem value="modern">Moderno</SelectItem>
-                          <SelectItem value="minimalist">Minimalista</SelectItem>
-                          <SelectItem value="colorful">Colorido</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="categories">Categorias de Conteúdo</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {["technology", "ai", "innovation", "productivity", "business", "digital"].map((category) => (
-                      <Badge
-                        key={category}
-                        variant={settings.contentCategories.includes(category) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          const newCategories = settings.contentCategories.includes(category)
-                            ? settings.contentCategories.filter(c => c !== category)
-                            : [...settings.contentCategories, category];
-                          setSettings({...settings, contentCategories: newCategories});
-                        }}
-                      >
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <Button onClick={() => handleSaveSettings("IA")}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Webhook Configuration */}
-        <TabsContent value="webhook">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Webhook className="w-5 h-5 text-primary" />
-                Configuração de Webhooks
-              </CardTitle>
-              <CardDescription>
-                Configure webhooks para integração com sistemas externos
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h4 className="font-medium">Habilitar Webhooks</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Enviar notificações para sistemas externos quando posts forem publicados
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.webhookEnabled}
-                  onCheckedChange={(checked) => setSettings({...settings, webhookEnabled: checked})}
-                />
-              </div>
-
-              {settings.webhookEnabled && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="webhookUrl">URL do Webhook</Label>
-                    <Input
-                      id="webhookUrl"
-                      placeholder="https://yourdomain.com/webhook"
-                      value={settings.webhookUrl}
-                      onChange={(e) => setSettings({...settings, webhookUrl: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="webhookSecret">Secret (opcional)</Label>
-                    <Input
-                      id="webhookSecret"
-                      type="password"
-                      placeholder="Chave secreta para validação"
-                      value={settings.webhookSecret}
-                      onChange={(e) => setSettings({...settings, webhookSecret: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="p-4 border rounded-lg bg-muted/50">
-                    <h4 className="font-medium mb-2">Payload do Webhook</h4>
-                    <pre className="text-xs text-muted-foreground">
-{`{
-  "event": "post_published",
-  "post_id": "123",
-  "content": "Post content...",
-  "published_at": "2024-01-01T10:00:00Z",
-  "platform": "linkedin"
-}`}
-                    </pre>
-                  </div>
-
-                  <Button 
-                    variant="outline"
-                    onClick={() => handleTestConnection("Webhook")}
-                  >
-                    <TestTube className="w-4 h-4 mr-2" />
-                    Testar Webhook
+                  <Button variant="outline" size="sm">
+                    Copiar
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Regenerar
                   </Button>
                 </div>
-              )}
-
-              <Button onClick={() => handleSaveSettings("Webhooks")}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Security Configuration */}
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                Configurações de Segurança
-              </CardTitle>
-              <CardDescription>
-                Configure as opções de segurança da sua conta
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-medium">Autenticação de Dois Fatores</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione uma camada extra de segurança à sua conta
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.twoFactorEnabled}
-                    onCheckedChange={(checked) => setSettings({...settings, twoFactorEnabled: checked})}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-medium">Acesso à API</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Permitir acesso via API externa à plataforma
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.apiAccessEnabled}
-                    onCheckedChange={(checked) => setSettings({...settings, apiAccessEnabled: checked})}
-                  />
-                </div>
-
-                {settings.apiAccessEnabled && (
-                  <div className="space-y-4 p-4 border rounded-lg">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <Key className="w-4 h-4" />
-                      Chaves de API
-                    </h4>
-                    <div className="space-y-2">
-                      <Label>API Key Atual</Label>
-                      <div className="flex gap-2">
-                        <Input 
-                          value="sk-proj-***************************"
-                          readOnly 
-                          className="font-mono text-sm"
-                        />
-                        <Button variant="outline" size="sm">
-                          Regenerar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-
-              <Button onClick={() => handleSaveSettings("Segurança")}>
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            )}
+          </div>
+          
+          <Button onClick={() => handleSaveSettings("Segurança")}>
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Configurações
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 };

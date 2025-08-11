@@ -12,7 +12,7 @@ import Templates from "./pages/Templates";
 import Create from "./pages/Create";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
-import LinkedInTestPublisher from "./components/LinkedInTestPublisher";
+
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -70,16 +70,7 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/test-linkedin" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <LinkedInTestPublisher />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+
           
           {/* Catch-all route */}
           <Route path="*" element={<NotFound />} />
