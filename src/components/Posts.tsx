@@ -67,12 +67,12 @@ const Posts = () => {
   // Salvar post no Supabase
   const savePost = async (postData: CreatePostData, isDraft: boolean = false) => {
     try {
-      const status = isDraft ? 'draft' : (postData.scheduledFor ? 'scheduled' : 'published');
+      const status = isDraft ? 'draft' : (postData.scheduled_for ? 'scheduled' : 'published');
       
       const newPostData: CreatePostData = {
         ...postData,
         status,
-        imageUrl: generatedImage || undefined
+        image_url: generatedImage || undefined
       };
 
       const savedPost = await postsService.createPost(newPostData);
@@ -90,7 +90,7 @@ const Posts = () => {
             const linkedinResult = await linkedinService.publishPost(
               savedPost.id,
               savedPost.content,
-              savedPost.imageUrl
+              savedPost.image_url
             );
             
             // Post publicado no LinkedIn com sucesso
@@ -253,12 +253,14 @@ const Posts = () => {
 
     setIsGenerating(true);
     try {
-      const imageUrl = await aiService.generateImage(newPost.content);
+      // Adiciona um timestamp para garantir que uma nova imagem seja gerada a cada clique
+      const uniquePrompt = `${newPost.content} - variation ${Date.now()}`;
+      const imageUrl = await aiService.generateImage(uniquePrompt);
       setGeneratedImage(imageUrl);
       
       toast({
         title: "Sucesso!",
-        description: "Imagem gerada com IA!"
+        description: "Nova imagem gerada com IA!"
       });
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
@@ -385,11 +387,23 @@ const Posts = () => {
                             <SelectValue placeholder="Selecione uma categoria" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                            <SelectItem value="negocios">Negócios</SelectItem>
+                            <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
+                            <SelectItem value="devops">DevOps</SelectItem>
+                            <SelectItem value="automacao">Automação</SelectItem>
+                            <SelectItem value="cloud-computing">Cloud Computing</SelectItem>
+                            <SelectItem value="inteligencia-artificial">Inteligência Artificial</SelectItem>
+                            <SelectItem value="machine-learning">Machine Learning</SelectItem>
+                            <SelectItem value="ciberseguranca">Cibersegurança</SelectItem>
+                            <SelectItem value="ciencia-dados">Ciência de Dados</SelectItem>
+                            <SelectItem value="blockchain">Blockchain</SelectItem>
+                            <SelectItem value="iot">Internet das Coisas (IoT)</SelectItem>
+                            <SelectItem value="mobile">Desenvolvimento Mobile</SelectItem>
+                            <SelectItem value="web">Desenvolvimento Web</SelectItem>
+                            <SelectItem value="infraestrutura">Infraestrutura</SelectItem>
+                            <SelectItem value="big-data">Big Data</SelectItem>
                             <SelectItem value="carreira">Carreira</SelectItem>
+                            <SelectItem value="negocios">Negócios</SelectItem>
                             <SelectItem value="inovacao">Inovação</SelectItem>
-                            <SelectItem value="marketing">Marketing</SelectItem>
                             <SelectItem value="lideranca">Liderança</SelectItem>
                           </SelectContent>
                         </Select>
@@ -509,11 +523,23 @@ const Posts = () => {
                           <SelectValue placeholder="Selecione uma categoria" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                          <SelectItem value="negocios">Negócios</SelectItem>
+                          <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
+                          <SelectItem value="devops">DevOps</SelectItem>
+                          <SelectItem value="automacao">Automação</SelectItem>
+                          <SelectItem value="cloud-computing">Cloud Computing</SelectItem>
+                          <SelectItem value="inteligencia-artificial">Inteligência Artificial</SelectItem>
+                          <SelectItem value="machine-learning">Machine Learning</SelectItem>
+                          <SelectItem value="ciberseguranca">Cibersegurança</SelectItem>
+                          <SelectItem value="ciencia-dados">Ciência de Dados</SelectItem>
+                          <SelectItem value="blockchain">Blockchain</SelectItem>
+                          <SelectItem value="iot">Internet das Coisas (IoT)</SelectItem>
+                          <SelectItem value="mobile">Desenvolvimento Mobile</SelectItem>
+                          <SelectItem value="web">Desenvolvimento Web</SelectItem>
+                          <SelectItem value="infraestrutura">Infraestrutura</SelectItem>
+                          <SelectItem value="big-data">Big Data</SelectItem>
                           <SelectItem value="carreira">Carreira</SelectItem>
+                          <SelectItem value="negocios">Negócios</SelectItem>
                           <SelectItem value="inovacao">Inovação</SelectItem>
-                          <SelectItem value="marketing">Marketing</SelectItem>
                           <SelectItem value="lideranca">Liderança</SelectItem>
                         </SelectContent>
                       </Select>
@@ -539,7 +565,7 @@ const Posts = () => {
                       title: newPost.title,
                       content: newPost.content,
                       category: newPost.category,
-                      scheduledFor: newPost.scheduledDate ? new Date(newPost.scheduledDate) : undefined
+                      scheduled_for: newPost.scheduledDate ? newPost.scheduledDate : undefined
                     };
                     savePost(postData, true);
                   }}
@@ -554,7 +580,7 @@ const Posts = () => {
                       title: newPost.title,
                       content: newPost.content,
                       category: newPost.category,
-                      scheduledFor: newPost.scheduledDate ? new Date(newPost.scheduledDate) : undefined
+                      scheduled_for: newPost.scheduledDate ? newPost.scheduledDate : undefined
                     };
                     savePost(postData, false);
                   }}
@@ -613,10 +639,10 @@ const Posts = () => {
                   <Card key={post.id} className="hover:shadow-lg transition-all duration-300">
                     <CardContent className="p-6">
                       <div className="flex gap-6">
-                        {post.imageUrl ? (
+                        {post.image_url ? (
                           <div className="w-32 h-24 bg-muted rounded-lg flex-shrink-0 overflow-hidden">
                             <img 
-                              src={post.imageUrl} 
+                              src={post.image_url} 
                               alt="Post image" 
                               className="w-full h-full object-cover"
                             />
@@ -666,20 +692,16 @@ const Posts = () => {
                             <div className="flex items-center gap-6 text-sm text-muted-foreground">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
-                                {post.scheduledFor 
-                                  ? new Date(post.scheduledFor).toLocaleDateString('pt-BR')
-                                  : post.publishedAt 
-                                  ? new Date(post.publishedAt).toLocaleDateString('pt-BR')
-                                  : new Date(post.createdAt).toLocaleDateString('pt-BR')
+                                {post.scheduled_for 
+                                  ? new Date(post.scheduled_for).toLocaleDateString('pt-BR')
+                                  : new Date(post.created_at).toLocaleDateString('pt-BR')
                                 }
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {post.scheduledFor 
-                                  ? new Date(post.scheduledFor).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                                  : post.publishedAt 
-                                  ? new Date(post.publishedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                                  : new Date(post.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                {post.scheduled_for 
+                                  ? new Date(post.scheduled_for).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                                  : new Date(post.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                                 }
                               </div>
                             </div>

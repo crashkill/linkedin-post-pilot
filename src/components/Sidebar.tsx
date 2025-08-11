@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Home, 
   FileText, 
-  PlusCircle, 
   Calendar, 
   Settings, 
   BarChart3, 
@@ -32,13 +31,7 @@ const Sidebar = ({ className }: SidebarProps) => {
       icon: Home,
       current: location.pathname === '/dashboard'
     },
-    {
-      name: 'Criar Post',
-      href: '/create',
-      icon: PlusCircle,
-      current: location.pathname === '/create',
-      badge: 'Novo'
-    },
+
     {
       name: 'Posts',
       href: '/posts',

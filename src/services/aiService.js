@@ -8,11 +8,19 @@ class AIService {
     // Usar cliente Supabase centralizado
     this.supabase = supabase
     
-    // URLs das Edge Functions
-    this.baseUrl = import.meta.env.VITE_SUPABASE_URL
+    // URLs das Edge Functions - usar local em desenvolvimento
+    const isDev = import.meta.env.DEV || window.location.hostname === 'localhost'
+    this.baseUrl = isDev 
+      ? (import.meta.env.VITE_SUPABASE_URL_LOCAL || 'http://127.0.0.1:54321')
+      : import.meta.env.VITE_SUPABASE_URL
+    
     this.groqUrl = `${this.baseUrl}/functions/v1/groq-proxy`
     this.geminiUrl = `${this.baseUrl}/functions/v1/gemini-proxy`
     this.huggingfaceUrl = `${this.baseUrl}/functions/v1/huggingface-proxy`
+    
+    console.log('🚀 AIService initialized with baseUrl:', this.baseUrl)
+    console.log('🔧 isDev:', isDev)
+    console.log('🌐 hostname:', window.location.hostname)
   }
 
   // Método auxiliar para fazer requisições autenticadas
@@ -85,7 +93,7 @@ class AIService {
         options
       })
       
-      return data.image
+      return data.imageUrl
     } catch (error) {
       console.error('Erro ao gerar imagem:', error)
       throw error

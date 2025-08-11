@@ -2,6 +2,21 @@
 
 Uma aplicação completa para automação e gerenciamento de posts no LinkedIn com IA integrada.
 
+## ✨ Últimas Atualizações
+
+### 🔧 Correções de Autenticação (v2.1.0)
+- ✅ **Resolvido:** Erro "ACCESS_TOKEN do LinkedIn não encontrado no Doppler"
+- ✅ **Resolvido:** Erro "Token inválido" na geração de imagem
+- ✅ **Implementado:** Detecção automática de ambiente (local vs produção)
+- ✅ **Configurado:** Bypass de autenticação para desenvolvimento local
+- ✅ **Otimizado:** Edge Functions com configurações específicas por ambiente
+
+### 🏗️ Arquitetura Inteligente
+- **Ambiente Local:** Bypass automático de verificação JWT
+- **Ambiente Produção:** Verificação completa de segurança
+- **Configuração Automática:** URLs detectadas dinamicamente
+- **Doppler Integration:** Todas as variáveis carregadas via Doppler
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/6919a1e3-5caf-4cf0-9df4-f836b7e134ac

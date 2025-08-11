@@ -243,21 +243,14 @@ class PostsService {
     
     const user = authState.user
 
-    // Primeiro, buscar as métricas atuais
-    const currentPost = await this.getPostById(id)
-    if (!currentPost) {
-      throw new Error('Post não encontrado')
-    }
-
-    const updatedMetrics = {
-      ...currentPost.engagement_metrics,
-      ...metrics
-    }
-
+    // Atualizar métricas diretamente
     const { data, error } = await supabase
       .from('posts')
       .update({
-        engagement_metrics: updatedMetrics,
+        likes: metrics.likes,
+        comments: metrics.comments,
+        shares: metrics.shares,
+        views: metrics.views,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -303,12 +296,10 @@ class PostsService {
 
     // Calcular engajamento total
     posts.forEach(post => {
-      if (post.engagement_metrics) {
-        stats.totalEngagement.likes += post.engagement_metrics.likes || 0
-        stats.totalEngagement.comments += post.engagement_metrics.comments || 0
-        stats.totalEngagement.shares += post.engagement_metrics.shares || 0
-        stats.totalEngagement.views += post.engagement_metrics.views || 0
-      }
+      stats.totalEngagement.likes += post.likes || 0
+      stats.totalEngagement.comments += post.comments || 0
+      stats.totalEngagement.shares += post.shares || 0
+      stats.totalEngagement.views += post.views || 0
     })
 
     return stats
@@ -338,6 +329,70 @@ class PostsService {
     }
 
     return data || []
+  }
+
+  // Buscar métricas de analytics do LinkedIn
+  async getLinkedInAnalytics(): Promise<{
+    totalEngagement: number
+    totalReach: number
+    totalImpressions: number
+    totalClicks: number
+  }> {
+    await authService.waitForInitialization()
+    const authState = authService.getState()
+    
+    if (!authState.user || !await authService.isAuthenticated()) {
+      throw new Error('Usuário não autenticado')
+    }
+    
+    const user = authState.user
+
+    // Buscar analytics dos posts do usuário
+    const { data, error } = await supabase
+      .from('linkedin_post_analytics')
+      .select(`
+        impressions,
+        clicks,
+        likes,
+        comments,
+        shares,
+        post_id
+      `)
+      .in('post_id', 
+        await supabase
+          .from('posts')
+          .select('id')
+          .eq('user_id', user.id)
+          .then(({ data }) => data?.map(p => p.id) || [])
+      )
+
+    if (error) {
+      console.error('Erro ao buscar analytics:', error)
+      // Retornar zeros se não houver analytics ainda
+      return {
+        totalEngagement: 0,
+        totalReach: 0,
+        totalImpressions: 0,
+        totalClicks: 0
+      }
+    }
+
+    const analytics = data || []
+    
+    const totalEngagement = analytics.reduce((sum, item) => 
+      sum + (item.likes || 0) + (item.comments || 0) + (item.shares || 0), 0
+    )
+    
+    const totalReach = analytics.reduce((sum, item) => sum + (item.impressions || 0), 0)
+    const totalImpressions = analytics.reduce((sum, item) => sum + (item.impressions || 0), 0)
+    const totalClicks = analytics.reduce((sum, item) => sum + (item.clicks || 0), 0)
+
+    return {
+      totalEngagement,
+      totalReach,
+      totalImpressions,
+      totalClicks
+    }
   }
 }
 

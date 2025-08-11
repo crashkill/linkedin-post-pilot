@@ -42,5 +42,11 @@ enable_confirmations = false
 [functions.linkedin-oauth]
 verify_jwt = false
 
+[functions.linkedin-auth]
+verify_jwt = false
+
 [functions.ai-proxy]
 verify_jwt = true
+
+[functions.huggingface-proxy]
+verify_jwt = false

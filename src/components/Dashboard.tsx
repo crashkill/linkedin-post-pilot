@@ -28,7 +28,7 @@ const Dashboard = () => {
       const allPosts = await postsService.getUserPosts();
       setPosts(allPosts);
       
-      // Calcular estatísticas
+      // Calcular estatísticas básicas
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
@@ -41,17 +41,30 @@ const Dashboard = () => {
         return postDate >= today && postDate < tomorrow;
       });
       
-      const totalEngagement = allPosts.reduce((sum, post) => 
-        sum + (post.likes || 0) + (post.comments || 0) + (post.shares || 0), 0
-      );
+      // Buscar métricas do LinkedIn Analytics
+      let analytics = {
+        totalEngagement: 0,
+        totalReach: 0,
+        totalImpressions: 0,
+        totalClicks: 0
+      };
       
-      const totalReach = allPosts.reduce((sum, post) => sum + (post.views || 0), 0);
+      try {
+        analytics = await postsService.getLinkedInAnalytics();
+      } catch (error) {
+        console.warn('Erro ao carregar analytics do LinkedIn:', error);
+        // Usar métricas básicas dos posts como fallback
+        analytics.totalEngagement = allPosts.reduce((sum, post) => 
+          sum + (post.likes || 0) + (post.comments || 0) + (post.shares || 0), 0
+        );
+        analytics.totalReach = allPosts.reduce((sum, post) => sum + (post.views || 0), 0);
+      }
       
       setStats({
         scheduled: scheduledPosts.length,
         today: todayPosts.length,
-        totalEngagement,
-        totalReach
+        totalEngagement: analytics.totalEngagement,
+        totalReach: analytics.totalReach
       });
       
     } catch (error) {

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Download, ImageIcon, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { downloadImageFromBase64, generateImageFilename, isValidBase64 } from '@/utils/imageUtils';
+import aiService from '@/services/aiService';
 
 interface ImageGeneratorProps {
   onImageGenerated?: (imageData: string) => void;
@@ -31,46 +32,29 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onImageGenerated }) => 
     setIsGenerating(true);
     
     try {
-      // Simular chamada para MCP-HF (substituir pela implementação real)
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt,
-          width: 1024,
-          height: 1024,
-          num_inference_steps: 4,
-          randomize_seed: true
-        })
+      // Usar o AIService para gerar imagem via Supabase Edge Function
+      const imageUrl = await aiService.generateImage(prompt, {
+        steps: 20,
+        guidance: 7.5,
       });
 
-      if (!response.ok) {
-        throw new Error('Falha na geração da imagem');
+      if (!imageUrl || typeof imageUrl !== 'string') {
+        throw new Error('Resposta inválida da geração de imagem');
       }
 
-      const data = await response.json();
-      
-      if (data.image && isValidBase64(data.image)) {
-        setGeneratedImage(data.image);
-        
-        // Criar preview da imagem
-        const imageUrl = `data:image/png;base64,${data.image}`;
-        setImagePreview(imageUrl);
-        
-        // Callback para componente pai
-        if (onImageGenerated) {
-          onImageGenerated(data.image);
-        }
-        
-        toast({
-          title: "✅ Imagem gerada com sucesso!",
-          description: "Sua imagem ultra-realista foi criada. Clique em 'Baixar' para salvá-la.",
-        });
-      } else {
-        throw new Error('Dados de imagem inválidos recebidos');
+      // imageUrl agora é sempre uma URL pública do Supabase Storage
+      // Não precisamos mais lidar com Data URLs gigantes
+      setGeneratedImage(null); // Não armazenamos mais base64
+      setImagePreview(imageUrl); // URL pública direta
+
+      if (onImageGenerated) {
+        onImageGenerated(imageUrl);
       }
+      
+      toast({
+        title: "✅ Imagem gerada com sucesso!",
+        description: "Sua imagem ultra-realista foi criada. Clique em 'Baixar' para salvá-la.",
+      });
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
       toast({
@@ -84,7 +68,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onImageGenerated }) => 
   };
 
   const downloadImage = () => {
-    if (!generatedImage) {
+    if (!imagePreview) {
       toast({
         title: "Nenhuma imagem disponível",
         description: "Gere uma imagem primeiro antes de fazer o download.",
@@ -95,7 +79,13 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onImageGenerated }) => 
 
     try {
       const filename = generateImageFilename('linkedin-post-ai');
-      downloadImageFromBase64(generatedImage, filename);
+      
+      // Como agora sempre temos uma URL pública, fazemos download direto
+      const link = document.createElement('a');
+      link.href = imagePreview;
+      link.download = filename;
+      link.target = '_blank'; // Abre em nova aba como fallback
+      link.click();
       
       toast({
         title: "📥 Download iniciado",
@@ -182,7 +172,7 @@ const ImageGenerator: React.FC<ImageGeneratorProps> = ({ onImageGenerated }) => 
             )}
           </Button>
           
-          {generatedImage && (
+          {imagePreview && (
             <Button 
               onClick={downloadImage}
               variant="outline"

@@ -22,57 +22,68 @@ serve(async (req) => {
   }
 
   try {
-    // Verificar autenticação
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'Missing authorization header' }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Inicializar cliente Supabase para verificar usuário
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader },
-        },
+    // Verificar se estamos em ambiente local (desenvolvimento)
+    const isLocal = Deno.env.get('SUPABASE_URL')?.includes('127.0.0.1') || 
+                   Deno.env.get('SUPABASE_URL')?.includes('localhost')
+    
+    let user = null
+    
+    if (!isLocal) {
+      // Verificar autenticação apenas em produção
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({ error: 'Missing authorization header' }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
       }
-    )
 
-    // Verificar se o usuário está autenticado
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'Token inválido' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    // Verificar rate limiting
-    const rateLimitResult = await huggingfaceLimiter.checkLimit(user.id)
-    if (!rateLimitResult.allowed) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Rate limit excedido. Tente novamente em alguns minutos.',
-          resetTime: rateLimitResult.resetTime
-        }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
-          } 
+      // Inicializar cliente Supabase para verificar usuário
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        {
+          global: {
+            headers: { Authorization: authHeader },
+          },
         }
-       )
-     }
+      )
+
+      // Verificar se o usuário está autenticado
+      const { data: { user: authUser }, error: authError } = await supabaseClient.auth.getUser()
+      if (authError || !authUser) {
+        return new Response(
+          JSON.stringify({ error: 'Token inválido' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      user = authUser
+
+      // Verificar rate limiting apenas em produção
+      const rateLimitResult = await huggingfaceLimiter.checkLimit(user.id)
+      if (!rateLimitResult.allowed) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit excedido. Tente novamente em alguns minutos.',
+            resetTime: rateLimitResult.resetTime
+          }),
+          { 
+            status: 429, 
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json',
+              'X-RateLimit-Remaining': '0',
+              'X-RateLimit-Reset': rateLimitResult.resetTime.toString()
+            } 
+          }
+         )
+       }
+    } else {
+      console.log('🔧 Running in local mode - skipping auth and rate limiting')
+    }
 
      // Parse request body
     const { prompt, options = {} }: HuggingFaceRequest = await req.json()
@@ -130,13 +141,50 @@ serve(async (req) => {
       )
     }
 
-    // Converter blob para base64 para enviar via JSON
+    // Obter blob da imagem
     const imageBlob = await hfResponse.blob()
-    const arrayBuffer = await imageBlob.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    console.log('Image blob type:', imageBlob.type, 'size:', imageBlob.size)
     
-    // Criar data URL
-    const imageUrl = `data:${imageBlob.type};base64,${base64}`
+    // Fazer upload da imagem para o Supabase Storage
+    const fileName = `ai-generated-${Date.now()}-${Math.random().toString(36).substring(7)}.png`
+    const storagePath = fileName // Path simples sem pasta de usuário
+    
+    // Upload para o bucket 'images' com upsert true para evitar conflitos
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('images')
+      .upload(storagePath, imageBlob, {
+        contentType: imageBlob.type || 'image/png',
+        upsert: true // Permite sobrescrever se existir
+      })
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError)
+      return new Response(
+        JSON.stringify({ error: `Erro ao salvar imagem: ${uploadError.message}` }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    // Obter URL pública da imagem
+    const { data: urlData } = supabaseClient.storage
+      .from('images')
+      .getPublicUrl(storagePath)
+
+    if (!urlData.publicUrl) {
+      return new Response(
+        JSON.stringify({ error: 'Erro ao obter URL pública da imagem' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
+    }
+
+    const imageUrl = urlData.publicUrl
+    console.log('Image uploaded to storage:', storagePath, 'Public URL:', imageUrl)
 
     // Log da requisição para monitoramento
     console.log(`Hugging Face API call for user ${user.id}: ${prompt.substring(0, 50)}...`)

@@ -9,7 +9,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Posts from "./pages/Posts";
 import Templates from "./pages/Templates";
-import Create from "./pages/Create";
+
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -25,9 +25,19 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           {/* Páginas públicas */}
-          <Route path="/" element={<Index />} />
+          <Route 
+            path="/" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/landing" element={<Index />} />
           
           {/* Páginas protegidas */}
           <Route 
@@ -60,16 +70,7 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/create" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Create />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+
 
           
           {/* Catch-all route */}
